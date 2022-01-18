@@ -20,16 +20,48 @@ namespace WS
 			std::string method;
 			std::string url;
 			std::string protocol_version;
-			std::multimap<std::string,std::string> req;
+			std::multimap<std::string,std::string> req_header;
+			std::multimap<std::string,std::string> req_body	;
 
-			std::string		get_url()
+			void	handle_error(std::string error)
 			{
-				std::ifstream myfile(url);
+				int ret;
+				if(error == "No such file or directory")
+				{
+					std::string hello = "HTTP/1.1 404 Not Found\nContent-Type: Text/html\nContent-Length: ";
+					std::string file = get_file(ret,"not_find.html");
+					std::string leng = std::to_string(file.length());
+					hello = hello + leng + "\n\n" + file;
+					write(new_socket, hello.c_str(), strlen(hello.c_str()));
+					close(new_socket);
+				}
+				else if(error == "Permission denied")
+				{
+					std::string hello = "HTTP/1.1 406 Not Acceptable\nContent-Type: Text/html\nContent-Length: ";
+					std::string file = get_file(ret,"not_acceptable.html");
+					std::string leng = std::to_string(file.length());
+					hello = hello + leng + "\n\n" + file;
+					write(new_socket, hello.c_str(), strlen(hello.c_str()));
+					close(new_socket);
+				}
+			}
+			std::string		get_file(int &ret,std::string file)
+			{
+				std::ifstream myfile(file);
 				std::string buff,line;
 
-				while(getline(myfile, buff))
+				if(myfile.good())
 				{
-					line = line + buff + "\n";
+					while(getline(myfile, buff))
+					{
+						line = line + buff + "\n";
+					}
+				}
+				else
+				{
+					ret = -1;
+					line = strerror(errno);
+					return line;
 				}
 				// line.pop_back();
 				return line;
@@ -56,23 +88,23 @@ namespace WS
 					if(leng != std::string::npos)
 					str = str.substr(leng+1,str.length());
 				}
-				while ((leng = buff.find('\n')) != std::string::npos)
+				while ((leng = buff.find("\r\n")) != std::string::npos)
 				{
 					str = buff.substr(0,leng);
-					req.insert(std::make_pair<std::string,std::string>(str.substr(0,str.find(' ')),str.substr(str.find(' ') +1,str.length())));
-					buff = buff.substr(leng+1,buff.length());
+					req_header.insert(std::make_pair<std::string,std::string>(str.substr(0,str.find(' ')),str.substr(str.find(' ') +1,str.length())));
+					buff = buff.substr(leng+2,buff.length());
 				}
-				
-				// std::cout <<"method : " <<method << " url : " << url << " protocol_version : " <<protocol_version <<std::endl;
-				// std::cout <<"==============================" <<std::endl;
-				// std::map<std::string,std::string>::iterator ite = req.end();
-				// for (std::map<std::string,std::string>::iterator it = req.begin(); it != ite; it++)
-				// {
-				// 	std::cout<<"first :" << it->first<< " : " << it->second <<std::endl;
-				// }
-				
-				// std::cout <<"==============================" <<std::endl;
-
+				if(buff[0] != '\n' && buff[0] != '\0')
+				{
+					while ((leng = buff.find("&")) != std::string::npos)
+					{
+						str = buff.substr(0,leng);
+						req_body.insert(std::make_pair<std::string,std::string>(str.substr(0,str.find('=')),str.substr(str.find('=') +1,str.length())));
+						buff = buff.substr(leng+1,buff.length());
+					}
+					str = buff.substr(0,buff.length());
+					req_body.insert(std::make_pair<std::string,std::string>(str.substr(0,str.find('=')),str.substr(str.find('=') +1,str.length())));
+				}
 			}
 			void accepter()
 			{
@@ -89,14 +121,22 @@ namespace WS
 
 			void responder()
 			{
-				std::string hello = "HTTP/1.1 200 OK\nContent-Type: Text/html\nContent-Length: ";
 				std::string file;
-				file = get_url();
-				std::string leng = std::to_string(file.length());
-				hello = hello + leng + "\n\n" + file;
-				std::cout << "|"<<hello << "|"<<std::endl;
-				write(new_socket, hello.c_str(), strlen(hello.c_str()));
-				close(new_socket);
+				int ret=0;
+				file = get_file(ret,url);
+				if(ret == -1)
+				{
+					handle_error(file);
+				}
+				else
+				{
+					std::string hello = "HTTP/1.1 200 OK\nContent-Type: Text/html\nContent-Length: ";
+					std::string leng = std::to_string(file.length());
+					hello = hello + leng + "\n\n" + file;
+					write(new_socket, hello.c_str(), strlen(hello.c_str()));
+					close(new_socket);
+				}
+
 			}
 
 		public :
