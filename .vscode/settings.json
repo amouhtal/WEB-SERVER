@@ -15,6 +15,11 @@
     "tuple": "cpp",
     "utility": "cpp",
     "string": "cpp",
-    "iosfwd": "cpp"
+    "iosfwd": "cpp",
+    "__bit_reference": "cpp",
+    "algorithm": "cpp",
+    "bitset": "cpp",
+    "unordered_map": "cpp",
+    "__config": "cpp"
   }
 }
