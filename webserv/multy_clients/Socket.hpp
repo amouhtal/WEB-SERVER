@@ -12,7 +12,7 @@
 #define TRUE 1
 #define FALSE 0
 #define PORT 80
-#define PORT_NUMBERS 3
+#define PORT_NUMBERS 1
 #define MAX_CLIENTS 30
 #define running 1
 class Sockets
@@ -21,21 +21,19 @@ private:
 	// Sockets *_socket;
 	// struct sockaddr_in address[PORT_NUMBERS];
 	int PORTS[PORT_NUMBERS];
-	int max_clients = 30;
-	int client_socket[30];
-	char buffer[1025];
-    int opt = TRUE;  
+	int opt = TRUE;
 
 public:
+	int max_clients = 30;
 	int master_sockets[PORT_NUMBERS];
+	int client_socket[30];
+	char buffer[1024];
 
 public:
 	Sockets()
 	{
-		PORTS[0] = 80;
-		PORTS[1] = 800;
-		PORTS[2] = 801;
-
+		// PORTS[1] = 800;
+		// PORTS[1] = 580;
 		for (int i = 0; i < max_clients; i++)
 		{
 			client_socket[i] = 0;
@@ -45,7 +43,10 @@ public:
 	// initialise all client_socket[]
 	void initialise_socket()
 	{
-		for (int i = 0; i < max_clients; i++)
+		PORTS[0] = 80;
+		PORTS[1] = 680;
+
+		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
 			client_socket[i] = 0;
 		}
@@ -61,20 +62,22 @@ public:
 				perror("socket failed");
 				exit(EXIT_FAILURE);
 			}
-			if (setsockopt(master_sockets[i], SOL_SOCKET, SO_REUSEADDR, (char *)&opt,sizeof(opt)) < 0)
-			{
-				perror("setsockopt");
-				exit(EXIT_FAILURE);
-			}
+			// if (setsockopt(master_sockets[i], SOL_SOCKET, SO_REUSEADDR, (char *)&opt,sizeof(opt)) < 0)
+			// {
+			// 	perror("setsockopt");
+			// 	exit(EXIT_FAILURE);
+			// }
 		}
 	}
 
 	// create_sockets_types
 
-	void initialise_adress(sockaddr_in address[3])
+	void initialise_adress(struct sockaddr_in address[PORT_NUMBERS])
 	{
+		// struct sockaddr_in adr[] = (struct sockaddr *)&address;
 		for (size_t i = 0; i < PORT_NUMBERS; i++)
 		{
+
 			address[i].sin_family = AF_INET;
 			address[i].sin_addr.s_addr = INADDR_ANY;
 			address[i].sin_port = htons(PORTS[i]);
@@ -82,12 +85,11 @@ public:
 	}
 
 	// bind sockets
-	void bind_sockets(sockaddr_in address[3])
+	void bind_sockets(sockaddr_in address[PORT_NUMBERS])
 	{
 		int bd;
 		for (size_t i = 0; i < PORT_NUMBERS; i++)
 		{
-
 			if ((bd = bind(master_sockets[i], (struct sockaddr *)&address[i], sizeof(address[i]))) < 0)
 			{
 				perror("bind failed");
@@ -114,12 +116,11 @@ public:
 	{
 		int sd;
 		int max_sd;
-
+		max_sd = master_sockets[0];
 		for (int i = 0; i < max_clients; i++)
 		{
 			// socket descriptor
 			sd = client_socket[i];
-
 			// if valid socket descriptor then add to read list
 			if (sd > 0)
 				FD_SET(sd, &preadfds);
@@ -128,6 +129,7 @@ public:
 			if (sd > max_sd)
 				max_sd = sd;
 		}
+		std::cout << max_sd << std::endl;
 		return max_sd;
 	}
 
@@ -142,7 +144,6 @@ public:
 			{
 				client_socket[i] = new_socket;
 				printf("Adding to list of sockets as %d\n", i);
-
 				break;
 			}
 		}
@@ -150,7 +151,7 @@ public:
 
 	// its some IO operation on some other socket
 
-	void m_operation(fd_set &readfds, sockaddr_in address[3])
+	void m_operation(fd_set &readfds, struct sockaddr_in address[PORT_NUMBERS])
 	{
 		int sd;
 		int valread;
@@ -158,7 +159,8 @@ public:
 		for (int i = 0; i < MAX_CLIENTS; i++)
 		{
 			sd = client_socket[i];
-			addrlen = sizeof(address[i]);
+			addrlen = sizeof(address[1]);
+
 			if (FD_ISSET(sd, &readfds))
 			{
 				// Check if it was for closing , and also read the
@@ -166,10 +168,10 @@ public:
 				if ((valread = read(sd, buffer, 1024)) == 0)
 				{
 					// Somebody disconnected , get his details and print
-					getpeername(sd, (struct sockaddr *)&address,
+					getpeername(sd, (struct sockaddr *)&address[1],
 								(socklen_t *)&addrlen);
 					printf("Host disconnected , ip %s , port %d \n",
-						   inet_ntoa(address[i].sin_addr), ntohs(address[i].sin_port));
+						   inet_ntoa(address[1].sin_addr), ntohs(address[1].sin_port));
 
 					// Close the socket and mark as 0 in list for reuse
 					close(sd);
