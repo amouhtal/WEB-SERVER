@@ -2,6 +2,61 @@
 #ifndef TestServer_hpp
 #define TestServer_hpp
 
+#ifndef STATUS_CODE_HPP
+#define STATUS_CODE_HPP
+
+//  Informational 1xx
+#define CONTINUE 100
+#define SWITCHINGPROTOCOL 101
+
+// Successful 2xx
+#define OK 200
+#define CREATED 201
+#define ACCEPTED 202
+#define NON AUTHORITATIVE 203
+#define NO_CONTENT 204
+#define RESET_CONTENT 205
+#define PARTIAL_CONTENT 206
+
+// Redirection 3xx
+#define MULTIPLE_CHOICES 300
+#define MOVED_PERMANENTLY 301
+#define FOUND 302
+#define SEE_OTHER 303
+#define NOT_MODIFIED 304
+#define USE_PROXY 305
+
+// Client Error 4xx
+#define BAD_REQUEST 400
+#define UNAUTHORIZED 401
+#define PAYMENT_REQUIRED 402
+#define FORBIDEN 403
+#define NOT_FOUND 404
+#define METHOD_NOT_ALLOWED 405
+#define NOT_ACCEPTABLE 406
+#define PROXY_AUTHENTCATION_REQUIRED 407
+#define REQUEST_TIMEOUT 408
+#define CONFLICT 409
+#define GONE 410
+#define LENGTH_REQUIRED 411
+#define PRECONDITION_FAILED 412
+#define REQUEST_ENTITY_TOO_LARGE 413
+#define REQUEST_URI_TOO_LONG 414
+#define UNSUPPORTED_MEDIA_TYPE 415
+#define REQUEST_RANGE_NOT_SATISFIABLE 416
+#define EXPECTATION_FAILED 417
+
+// Server Error 5xx
+#define INTERNAL_SERVER_ERROR 500
+#define NOT_IMPLEMENTED 501
+#define BAD_GETEWAY 502
+#define SERVICE_UNABAILABLE 503
+#define GATEWAY_TIMEOUT 504
+#define HTTP_VERSOIN_NOT_SUPPORTED 505
+
+#endif
+
+
 #include "SimapleServer.hpp"
 #include "unistd.h"
 #include <iostream>
@@ -121,20 +176,43 @@ namespace WS
 
 			void responder()
 			{
-				std::string file;
-				int ret=0;
-				file = get_file(ret,url);
-				if(ret == -1)
+				if(method == "GET")
 				{
-					handle_error(file);
+					std::string file;
+					int ret=0;
+					if(url[0] == '\0')
+						url = "index.html";
+					file = get_file(ret,url);
+					if(ret == -1)
+					{
+						handle_error(file);
+					}
+					else
+					{
+						std::string hello = "HTTP/1.1 200 OK\nContent-Type: Text/html\nContent-Length: ";
+						std::string leng = std::to_string(file.length());
+						hello = hello + leng + "\n\n" + file;
+						write(new_socket, hello.c_str(), strlen(hello.c_str()));
+						close(new_socket);
+					}
 				}
-				else
+				else if(method == "POST")
 				{
+					std::string file;
+					int ret=0;
+					file = get_file(ret,url);
+					if(ret == -1)
+					{
+						handle_error(file);
+					}
+					else
+					{
 					std::string hello = "HTTP/1.1 200 OK\nContent-Type: Text/html\nContent-Length: ";
 					std::string leng = std::to_string(file.length());
 					hello = hello + leng + "\n\n" + file;
 					write(new_socket, hello.c_str(), strlen(hello.c_str()));
 					close(new_socket);
+					}
 				}
 
 			}
@@ -153,7 +231,7 @@ namespace WS
 				}
 			}
 
-			TestServer() : SimapleServer(AF_INET, SOCK_STREAM, 0, 80, INADDR_ANY, 10)
+			TestServer() : SimapleServer(AF_INET, SOCK_STREAM, 0, 800, INADDR_ANY, 10)
 			{
 				launch();
 			}
