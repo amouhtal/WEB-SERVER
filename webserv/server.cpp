@@ -57,8 +57,10 @@ namespace SERVER
 						{
 							if (*it == sockFD)
 							{
-								printf("it : %d \n", sockFD);
+								// printf("it : %d \n", sockFD);
 								this->newClient(*it);
+								printf("iet : %d \n", sockFD);
+								
 								_treat = true;
 								break;
 							}
@@ -93,6 +95,7 @@ namespace SERVER
 								it->second += _buffRes;
 							bool_treat = true;
 							printf("%s\n", _buffRes);
+							
 							// exit(1);
 							// if (FD_ISSET(sockFD, &_readFDs))
 							//{
@@ -106,9 +109,8 @@ namespace SERVER
 						}
 					}
 
-					if (FD_ISSET(sockFD, &_socket._writefds) )
+					if (FD_ISSET(sockFD, &_socket._writefds) && bool_treat)
 					{
-						puts("writeee");
 						int rtn_send;
 						rtn_send = send(sockFD, message, strlen(message), 0);
 						close(sockFD);
