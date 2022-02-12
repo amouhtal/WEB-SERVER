@@ -3,7 +3,7 @@
 
 namespace SERVER
 {
-
+    
     void ASOCKET::SetupSocket()
     {
         std::vector<short>::iterator beginPort;
@@ -16,6 +16,8 @@ namespace SERVER
         beginPort = _ports.begin();
         endPort = _ports.end();
         FD_ZERO(&_masterFDs);
+        FD_ZERO(&_writefds);
+
         std::cout << "Begin setup ..." << std::endl;
 
         for (beginPort; beginPort != endPort; beginPort++)

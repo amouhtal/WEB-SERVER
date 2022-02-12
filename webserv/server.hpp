@@ -16,12 +16,18 @@
 #include <vector>
 #include <map>
 #include "socket.hpp"
+#include "Client.hpp"
 
 #define BUFFER_SIZE 1024
+#define CHUNKED 2
 #define running 1
 
 namespace SERVER
 {
+	/*
+		* this class is response of create  socket, bind it,
+		and listen for any incmonig connection
+	*/
 	class ASOCKET
 	{
 	public:
@@ -66,6 +72,7 @@ namespace SERVER
 
 		fd_set _readFDs;
 		int _activity;
+		std::vector<Client> _clients;
 		std::map<int, std::string> _clientList;
 		std::map<int, int> _accptMaster;
 		ASOCKET _socket;
