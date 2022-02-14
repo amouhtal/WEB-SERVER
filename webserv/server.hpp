@@ -93,6 +93,7 @@ namespace SERVER
 		}
 		void waitClients();
 		void newClient(int &sockFD);
+		~ASERVER(void);
 	};
 }
 

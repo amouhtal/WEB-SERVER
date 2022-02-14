@@ -39,8 +39,8 @@ namespace SERVER
             perror("[ERROR] in fcntl !");
 
         int opt = 1;
-        if (setsockopt(_masterSockFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
-            perror("[ERROR] in setsockopt !");
+        // if (setsockopt(_masterSockFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
+        //     perror("[ERROR] in setsockopt !");
     }
 
     void ASOCKET::BindSocket()

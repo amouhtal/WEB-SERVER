@@ -1,7 +1,7 @@
 #include "server.hpp"
 #include "socket.hpp"
 #include <fstream>
-#include <iomanip>
+#include "time.h"
 
 namespace SERVER
 {
@@ -47,44 +47,6 @@ namespace SERVER
 			end = request.find("\n", begin);
 		}
 		return (0);
-	}
-
-	bool checkReq(int sockFd, std::string request)
-	{
-		bool ret = false;
-		int status;
-		// std::string rest = request.substr(find_pos + 4, request.length() - (find_pos + 4));
-
-		status = checkContent(request);
-		size_t pos = request.find("\r\n\r\n");
-		// std::string str = "";
-		if (status == 0 && pos != std::string::npos)
-		{
-			puts("status : 0");
-			ret = true;
-		}
-		if (status == 1)
-		{
-			std::string body = request.substr(pos + 4, request.length() - (pos + 4));
-
-			// printf("body: %d content-lenght : %d\n", body.length(), getContentLen(request));
-			if (body.length() == getContentLen(request) ||
-				body.find("\r\n\r\n") != std::string::npos)
-				ret = true;
-			puts("status :  1");
-		}
-		if (status == 2)
-		{
-			std::string body = request.substr(pos + 4, request.length() - (pos + 4));
-			pos = body.find("0\r\n\r\n");
-			if (pos != std::string::npos)
-				if (pos == 0 || (body[pos - 2] == '\r' && body[pos - 1] == '\n'))
-				{
-					ret = true;
-				}
-		}
-		std::cout << "ret : " << ret << std::endl;
-		return ret;
 	}
 
 	bool checkReq(Client client)
@@ -139,7 +101,7 @@ namespace SERVER
 
 		outfile.open("server.log", std::ios_base::app);
 		time_t now = time(0);
-		tm* localtm = localtime(&now);
+		tm *localtm = localtime(&now);
 
 		outfile << "client socket : " << accptSockFD << " "
 				<< "ip : " << inet_ntoa(_Adrress.sin_addr) << " "
@@ -147,9 +109,12 @@ namespace SERVER
 				<< "Date : " << asctime(localtm);
 
 		outfile.close();
+		puts("begin");
 		Client *newClient = new Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr));
 
+		// _clients.push_back(Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr)));
 		_clients.push_back(*newClient);
+		puts("fin"); 
 		_clientList.insert(std::pair<int, std::string>(accptSockFD, ""));
 		std::map<int, int>::iterator it = _accptMaster.find(accptSockFD);
 		if (it != _accptMaster.end())
@@ -161,7 +126,9 @@ namespace SERVER
 	void ASERVER::waitClients()
 	{
 		char message[70] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 6\r\n\r\nhello\n";
-		std::cout << "\n" << "+++++++ Waiting for new connection +++++++" << "\n";
+		std::cout << "\n"
+				  << "+++++++ Waiting for new connection +++++++"
+				  << "\n";
 
 		while (running)
 		{
@@ -172,7 +139,6 @@ namespace SERVER
 			memcpy(&_socket._workingFDs, &_socket._masterFDs, sizeof(_socket._masterFDs));
 			// poll kqueue
 			_activity = select(_maxSockFD + 1, &_socket._workingFDs, &_socket._writefds, NULL, NULL);
-
 			if (_activity == -1)
 				perror("[ERROR] SELECT");
 			if (_activity > 0)
@@ -207,7 +173,8 @@ namespace SERVER
 							close(sockFD);
 							FD_CLR(sockFD, &_socket._masterFDs);
 							FD_CLR(sockFD, &_socket._writefds);
-							_maxSockFD--;
+							if (sockFD == _maxSockFD)
+								_maxSockFD--;
 							_clientList.erase(sockFD);
 							_clients.erase(_clients.begin() + CurrentCli);
 							CurrentCli--;
@@ -224,11 +191,19 @@ namespace SERVER
 					if (FD_ISSET(sockFD, &_socket._writefds) && client.getReceived())
 					{
 						int SendRet;
-						SendRet = send(sockFD, message, strlen(message), 0);
+						std::string reeq = "HTTP/1.1 200 OK\r\nDate : Mon,27 Jul 2009 12 : 28 : 53 GMT\r\nServer : Apache /2.2.14(Win32)\r\nLast -Modified : Wed,22 Jul 2009 19 : 15 : 56 GMT\r\nContent -Length : 5000\r\nContent - Type : image/jpeg\r\nConnection : Closed\r\n\r\n";
+						reeq += "......JFIF.............0Photo: Osvaldo Gago\r\n";
+
+
+						
+						SendRet = send(sockFD, reeq.c_str(), strlen(reeq.c_str()), 0);
 						close(sockFD);
 						FD_CLR(sockFD, &_socket._masterFDs);
 						FD_CLR(sockFD, &_socket._writefds);
 						_clientList.erase(sockFD);
+						if (sockFD == _maxSockFD)
+							_maxSockFD--;
+						CurrentCli--;
 						bool_treat = true;
 						client.setReceived(false);
 					}
@@ -236,5 +211,14 @@ namespace SERVER
 			}
 			usleep(2000);
 		}
+	}
+
+	ASERVER::~ASERVER(void)
+	{
+		// exit(1);
+		// for (std::vector<Client>::iterator it = _clients.begin(); it != _clients.end() ; it++)
+		// {
+		// it->~Client();
+		// }
 	}
 }
