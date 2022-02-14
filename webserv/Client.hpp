@@ -29,6 +29,12 @@ namespace SERVER
 			return (_request);
 		}
 
+		void setRequest(std::string request)
+		{
+			_request = request;
+			
+		}
+
 		Client &operator=(Client &rhs)
 		{
 			this->_sockFd = rhs._sockFd;

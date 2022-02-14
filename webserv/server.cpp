@@ -1,8 +1,5 @@
 #include "server.hpp"
 #include "socket.hpp"
-#include <fstream>
-#include "time.h"
-
 namespace SERVER
 {
 
@@ -32,7 +29,7 @@ namespace SERVER
 		size_t begin = 0;
 		size_t find_pos = 0;
 		size_t end = request.find("\r\n");
-		std::cout << "request : " << request << std::endl;
+		// std::cout << "request : " << request << std::endl;
 		while (end != std::string::npos)
 		{
 			std::string header = request.substr(begin, end - begin);
@@ -89,8 +86,8 @@ namespace SERVER
 		if (accptSockFD == -1)
 			perror("[ERROR] Socket");
 		std::cout << "New connection: Master socket " << std::to_string(sockFD) << ". Accept socket " + std::to_string(accptSockFD) << ", address " << inet_ntoa(_Adrress.sin_addr) << ":" << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
-		if (fcntl(accptSockFD, F_SETFL, O_NONBLOCK) == -1)
-			perror("ERROR] fcntl");
+		// if (fcntl(accptSockFD, F_SETFL, O_NONBLOCK) == -1)
+		// 	perror("ERROR] fcntl");
 		FD_SET(accptSockFD, &_socket._masterFDs);
 		FD_SET(accptSockFD, &_socket._writefds);
 		// _socket._masterSockFDs.push_back(accptSockFD);
@@ -109,12 +106,10 @@ namespace SERVER
 				<< "Date : " << asctime(localtm);
 
 		outfile.close();
-		puts("begin");
 		Client *newClient = new Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr));
 
 		// _clients.push_back(Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr)));
 		_clients.push_back(*newClient);
-		puts("fin"); 
 		_clientList.insert(std::pair<int, std::string>(accptSockFD, ""));
 		std::map<int, int>::iterator it = _accptMaster.find(accptSockFD);
 		if (it != _accptMaster.end())
@@ -186,26 +181,65 @@ namespace SERVER
 							// 		  << "request string : " << client.getRequest() << std::endl;
 							client.setReceived(checkReq(client));
 						}
+
+						std::string statusLine;
+						std::string bodyMessage;
+						std::map<std::string, std::string> _responseHeaders;
+						std::string respStr;
+
+						statusLine = "HTTP/1.1 200 OK";
+						std::ifstream file;
+						std::ostringstream streambuff;
+						file.open("/Users/amouhtal/Desktop/web-serv/webserv/giphy.gif", std::ios::binary);
+						if (file.is_open())
+						{
+							streambuff << file.rdbuf();
+							bodyMessage = streambuff.str();
+							file.close();
+						}
+						_responseHeaders["Content-Length"] = std::to_string(bodyMessage.length());
+						//Content-Type: image
+						_responseHeaders["Content-Type"] = "image/gif";
+						respStr += statusLine;
+						respStr += "\r\n";
+						std::map<std::string, std::string>::iterator it = _responseHeaders.begin();
+						while (it != _responseHeaders.end())
+						{
+							respStr += it->first;
+							respStr += ": ";
+							respStr += it->second;
+							respStr += "\n";
+							it++;
+						}
+						respStr += "\r\n";
+						respStr += bodyMessage;
+						respStr += "\r\n\r\n";
+						// std::cout << respStr << std::endl;
+						client.setRequest(respStr);
 					}
 
 					if (FD_ISSET(sockFD, &_socket._writefds) && client.getReceived())
 					{
 						int SendRet;
-						std::string reeq = "HTTP/1.1 200 OK\r\nDate : Mon,27 Jul 2009 12 : 28 : 53 GMT\r\nServer : Apache /2.2.14(Win32)\r\nLast -Modified : Wed,22 Jul 2009 19 : 15 : 56 GMT\r\nContent -Length : 5000\r\nContent - Type : image/jpeg\r\nConnection : Closed\r\n\r\n";
-						reeq += "......JFIF.............0Photo: Osvaldo Gago\r\n";
+						std::string respStr = client.getRequest();
+						std::cout << "---->" << respStr << std::endl;
+						SendRet = send(sockFD, respStr.c_str(), strlen(respStr.c_str()), 0);
+						if (SendRet < 0)
+						{
+							close(sockFD);
+							FD_CLR(sockFD, &_socket._masterFDs);
+							FD_CLR(sockFD, &_socket._writefds);
+							_clientList.erase(sockFD);
+							if (sockFD == _maxSockFD)
+								_maxSockFD--;
+							CurrentCli--;
+						}
+						else
+						{
+							client.setReceived(true);
+							bool_treat = true;
 
-
-						
-						SendRet = send(sockFD, reeq.c_str(), strlen(reeq.c_str()), 0);
-						close(sockFD);
-						FD_CLR(sockFD, &_socket._masterFDs);
-						FD_CLR(sockFD, &_socket._writefds);
-						_clientList.erase(sockFD);
-						if (sockFD == _maxSockFD)
-							_maxSockFD--;
-						CurrentCli--;
-						bool_treat = true;
-						client.setReceived(false);
+						}
 					}
 				}
 			}

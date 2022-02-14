@@ -3,7 +3,7 @@
 
 namespace SERVER
 {
-    
+
     void ASOCKET::SetupSocket()
     {
         std::vector<short>::iterator beginPort;
@@ -32,15 +32,16 @@ namespace SERVER
 
     void ASOCKET::CreatSocket()
     {
+
         if ((_masterSockFD = socket(AF_INET, SOCK_STREAM, 0)) < 0)
             perror("[ERROR] in socket !");
 
-        if (fcntl(_masterSockFD, F_SETFL, O_NONBLOCK) == -1)
-            perror("[ERROR] in fcntl !");
+        // if (fcntl(_masterSockFD, F_SETFL, O_NONBLOCK) == -1)
+        //     perror("[ERROR] in fcntl !");
 
         int opt = 1;
-        // if (setsockopt(_masterSockFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
-        //     perror("[ERROR] in setsockopt !");
+        if (setsockopt(_masterSockFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int)) == -1)
+            perror("[ERROR] in setsockopt !");
     }
 
     void ASOCKET::BindSocket()
@@ -60,7 +61,7 @@ namespace SERVER
             perror("[ERROR] in listen !");
         FD_SET(_masterSockFD, &_masterFDs);
 
-	    _maxSockFD = (_masterSockFD > _maxSockFD) ? _masterSockFD : _maxSockFD;
+        _maxSockFD = (_masterSockFD > _maxSockFD) ? _masterSockFD : _maxSockFD;
         _masterSockFDs.push_back(_masterSockFD);
         std::cout << "Sock : " << _masterSockFD << std::endl;
     }

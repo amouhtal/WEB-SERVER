@@ -17,6 +17,9 @@
 #include <map>
 #include "socket.hpp"
 #include "Client.hpp"
+#include <fstream>
+#include "time.h"
+#include <sstream>
 
 #define BUFFER_SIZE 1024
 #define CHUNKED 2

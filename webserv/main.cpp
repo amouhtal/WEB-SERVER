@@ -1,30 +1,31 @@
 #include "socket.hpp"
 #include "server.hpp"
 
-# include <signal.h>
+#include <signal.h>
 
-void	signal_handler(int signum)
+void signal_handler(int signum)
 {
-	if (signum == SIGINT)
-	{
-		std::cout << "ctrl-c detected, closing application..." << std::endl;
-		throw std::exception();
-	}
-	if (signum == SIGQUIT)
-	{
-		std::cout << "ctrl-d detected, closing application..." << std::endl;
-		throw std::exception();
-	}
+    if (signum == SIGINT)
+    {
+        std::cout << "ctrl-c detected, closing application..." << std::endl;
+        throw std::exception();
+    }
+    if (signum == SIGQUIT)
+    {
+        std::cout << "ctrl-d detected, closing application..." << std::endl;
+        throw std::exception();
+    }
 }
 
 int main()
 {
+    std::cout << "heree" << std::endl;
+
     SERVER::ASERVER runServer;
     signal(SIGINT, signal_handler);
-	signal(SIGQUIT, signal_handler);
+    signal(SIGQUIT, signal_handler);
     runServer.launch();
 
-    
     /*
     struct sockaddr_in antelope;
     char *some_addr;
