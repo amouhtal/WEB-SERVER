@@ -8,8 +8,10 @@ namespace SERVER
 		int _sockFd;
 		std::string _ip;
 		std::string _request;
-		size_t _endOfReq;
+		bool _endOfReq;
 		bool _received;
+		size_t _lenReq;
+		int _SendRetSnd;
 
 	public:
 		Client(int sockFd, std::string request, std::string ip)
@@ -17,14 +19,46 @@ namespace SERVER
 			_sockFd = sockFd;
 			_request = request;
 			_ip = ip;
+			_endOfReq = false;
+			_lenReq = 0;
+			_SendRetSnd = 0;
 		}
 
+		void SendRetSnd(size_t SendRetSnd)
+		{
+			_SendRetSnd = SendRetSnd;
+		}
+
+		int GetRetSnd()
+		{
+			return (_SendRetSnd);
+		}
+
+		void setLenReq(size_t lenReq)
+		{
+			_lenReq = lenReq;
+		}
+
+		size_t getLenReq()
+		{
+			return (_lenReq);
+		}
+
+		bool getEndofReq()
+		{
+			return _endOfReq;
+		}
+
+		void setgetEndofReq(bool getEndofReq)
+		{
+			_endOfReq = getEndofReq;
+		}
 		void appendReq(char *request)
 		{
 			_request += request;
 		}
 
-		std::string getRequest()
+		std::string &getRequest()
 		{
 			return (_request);
 		}
@@ -32,7 +66,6 @@ namespace SERVER
 		void setRequest(std::string request)
 		{
 			_request = request;
-			
 		}
 
 		Client &operator=(Client &rhs)

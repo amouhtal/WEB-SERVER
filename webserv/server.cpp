@@ -1,5 +1,10 @@
 #include "server.hpp"
 #include "socket.hpp"
+
+// #include <winsock2.h>
+// #include <Ws2tcpip.h>
+#include <stdio.h>
+
 namespace SERVER
 {
 
@@ -86,8 +91,8 @@ namespace SERVER
 		if (accptSockFD == -1)
 			perror("[ERROR] Socket");
 		std::cout << "New connection: Master socket " << std::to_string(sockFD) << ". Accept socket " + std::to_string(accptSockFD) << ", address " << inet_ntoa(_Adrress.sin_addr) << ":" << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
-		// if (fcntl(accptSockFD, F_SETFL, O_NONBLOCK) == -1)
-		// 	perror("ERROR] fcntl");
+		if (fcntl(accptSockFD, F_SETFL, O_NONBLOCK) == -1)
+			perror("ERROR] fcntl");
 		FD_SET(accptSockFD, &_socket._masterFDs);
 		FD_SET(accptSockFD, &_socket._writefds);
 		// _socket._masterSockFDs.push_back(accptSockFD);
@@ -110,7 +115,7 @@ namespace SERVER
 
 		// _clients.push_back(Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr)));
 		_clients.push_back(*newClient);
-		_clientList.insert(std::pair<int, std::string>(accptSockFD, ""));
+		// _clientList.insert(std::pair<int, std::string>(accptSockFD, ""));
 		std::map<int, int>::iterator it = _accptMaster.find(accptSockFD);
 		if (it != _accptMaster.end())
 			it->second = sockFD;
@@ -139,7 +144,6 @@ namespace SERVER
 			if (_activity > 0)
 			{
 				bool _treat = false;
-				bool bool_treat = false;
 				std::vector<int>::iterator it;
 				for (it = _masterSockFDs.begin(); it != _masterSockFDs.end(); it++)
 				{
@@ -153,16 +157,19 @@ namespace SERVER
 				for (size_t CurrentCli = 0; CurrentCli < _clients.size(); CurrentCli++)
 				{
 					Client &client = _clients[CurrentCli];
+					bool bool_treat = false;
 					int sockFD = client.getSockFd();
-					if (FD_ISSET(sockFD, &_socket._workingFDs) && !bool_treat)
+					if (FD_ISSET(sockFD, &_socket._workingFDs) && client.getEndofReq() == false)
 					{
+						std::cout << "Remplir reqqq\n";
+
 						char _buffRes[BUFFER_SIZE + 1];
 						bzero(_buffRes, sizeof(_buffRes));
 						int valRead = recv(sockFD, _buffRes, BUFFER_SIZE, 0);
 						std::cout << "valread :" << valRead << std::endl;
 						std::cout << "Activity in socket " << std::to_string(sockFD) << ", address: " << inet_ntoa(_Adrress.sin_addr) << ':' << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
 
-						if (valRead == 0)
+						if (valRead < 1)
 						{
 							std::cout << "Disconnected socket: " << std::to_string(sockFD) << std::endl;
 							close(sockFD);
@@ -181,51 +188,65 @@ namespace SERVER
 							// 		  << "request string : " << client.getRequest() << std::endl;
 							client.setReceived(checkReq(client));
 						}
-
-						std::string statusLine;
-						std::string bodyMessage;
-						std::map<std::string, std::string> _responseHeaders;
-						std::string respStr;
-
-						statusLine = "HTTP/1.1 200 OK";
-						std::ifstream file;
-						std::ostringstream streambuff;
-						file.open("/Users/amouhtal/Desktop/web-serv/webserv/giphy.gif", std::ios::binary);
-						if (file.is_open())
+						if (client.getEndofReq() == false)
 						{
-							streambuff << file.rdbuf();
-							bodyMessage = streambuff.str();
-							file.close();
+							std::string statusLine;
+							std::string bodyMessage;
+							std::map<std::string, std::string> _responseHeaders;
+							std::string respStr;
+
+							statusLine = "HTTP/1.1 200 OK";
+							std::ifstream file;
+							std::ostringstream streambuff;
+							file.open("/Users/amouhtal/Desktop/web-serv/webserv/among.mp4", std::ios::binary);
+							if (file.is_open())
+							{
+								streambuff << file.rdbuf();
+								bodyMessage = streambuff.str();
+								file.close();
+							}
+							_responseHeaders["Content-Length"] = std::to_string(bodyMessage.length());
+							// Content-Type: image
+							_responseHeaders["Content-Type"] = "video/mp4";
+							respStr += statusLine;
+							respStr += "\r\n";
+							std::map<std::string, std::string>::iterator it = _responseHeaders.begin();
+							while (it != _responseHeaders.end())
+							{
+								respStr += it->first;
+								respStr += ": ";
+								respStr += it->second;
+								respStr += "\n";
+								it++;
+							}
+							respStr += "\r\n";
+							respStr += bodyMessage;
+							respStr += "\r\n\r\n";
+							client.setReceived(checkReq(client));
+							// std::cout << respStr << std::endl;
+							client.setRequest(respStr);
+							client.setLenReq(respStr.length());
+							client.setgetEndofReq(true);
 						}
-						_responseHeaders["Content-Length"] = std::to_string(bodyMessage.length());
-						//Content-Type: image
-						_responseHeaders["Content-Type"] = "image/gif";
-						respStr += statusLine;
-						respStr += "\r\n";
-						std::map<std::string, std::string>::iterator it = _responseHeaders.begin();
-						while (it != _responseHeaders.end())
-						{
-							respStr += it->first;
-							respStr += ": ";
-							respStr += it->second;
-							respStr += "\n";
-							it++;
-						}
-						respStr += "\r\n";
-						respStr += bodyMessage;
-						respStr += "\r\n\r\n";
-						// std::cout << respStr << std::endl;
-						client.setRequest(respStr);
 					}
 
 					if (FD_ISSET(sockFD, &_socket._writefds) && client.getReceived())
 					{
-						int SendRet;
+						int SendRet = 0;
 						std::string respStr = client.getRequest();
-						std::cout << "---->" << respStr << std::endl;
-						SendRet = send(sockFD, respStr.c_str(), strlen(respStr.c_str()), 0);
-						if (SendRet < 0)
+						client.setLenReq(respStr.length());
+						puts("begin");
+						int leng = client.getLenReq() > 794000 ? 794000 : client.getLenReq();
+
+						SendRet = send(sockFD, respStr.c_str(), leng, 0);
+						puts("end");
+
+						client.SendRetSnd(client.GetRetSnd() + SendRet);
+						std::cout << "SendRet : " << SendRet << " send lenght : " << client.GetRetSnd() << "req lenght " << client.getLenReq() << std::endl;
+						client.setRequest(client.getRequest().substr(SendRet, client.getLenReq()));
+						if (SendRet < 1)
 						{
+							puts("yes im in SendRet < 1");
 							close(sockFD);
 							FD_CLR(sockFD, &_socket._masterFDs);
 							FD_CLR(sockFD, &_socket._writefds);
@@ -233,17 +254,43 @@ namespace SERVER
 							if (sockFD == _maxSockFD)
 								_maxSockFD--;
 							CurrentCli--;
+							client.setReceived(false);
+							client.getRequest().clear();
+							bool_treat = true;
+							client.setLenReq(0);
+							client.SendRetSnd(0);
+							client.setgetEndofReq(false);
+						}
+						else if (client.getRequest().length() == 0)
+						{
+							puts("yes im in lenght == 0");
+							close(sockFD);
+							FD_CLR(sockFD, &_socket._masterFDs);
+							FD_CLR(sockFD, &_socket._writefds);
+							_clientList.erase(sockFD);
+							if (sockFD == _maxSockFD)
+								_maxSockFD--;
+							CurrentCli--;
+							client.setReceived(false);
+							client.getRequest().clear();
+							bool_treat = true;
+							client.setLenReq(0);
+							client.SendRetSnd(0);
+							client.setgetEndofReq(false);
 						}
 						else
 						{
-							client.setReceived(true);
-							bool_treat = true;
-
+							// client.setRequest(client.getRequest().c_str() +  SendRet);
+							// std::cout << "sendRet " << SendRet << " req lenght : " << (client.getRequest()).length()  << std::endl;
 						}
+						// std::cout << "req = " << client.getRequest() << std::endl;
+						// std::cout << "req2 = " << client.getRequest() << std::endl;
+						// puts("yes im in");
 					}
 				}
+				// puts("here");
 			}
-			usleep(2000);
+			// usleep(2000);
 		}
 	}
 
