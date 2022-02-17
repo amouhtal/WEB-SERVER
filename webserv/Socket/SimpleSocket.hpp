@@ -5,7 +5,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <iostream>
-
+#include <fcntl.h>
 /*
 NOTE
 	TCP Sockets
@@ -30,6 +30,8 @@ namespace WS
 			address.sin_addr.s_addr = htonl(interface);
 			// ESTABLISH SOCKET
 			this->sock = socket(domain, service, protocol);
+			// if (fcntl(this->sock, F_SETFL, O_NONBLOCK) == -1)
+            // perror("[ERROR] in fcntl !");
 			test_connection(sock);
 		}
 

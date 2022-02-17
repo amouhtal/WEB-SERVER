@@ -6,19 +6,51 @@ int main()
 {
 	WS::TestServer t;
 }
+
+
+
+
+
+
+
+// int	count_words(std::string str)
+// {
+// 	int i =0;
+// 	int count =0;
+
+// 	while (str[i])
+// 	{
+// 		while (str[i] != ' ' && str[i] )
+// 		{
+// 			i++;
+// 		}
+// 		if(str[i] == ' ')
+// 			i++;
+// 		count++;
+// 	}
+// 	return count;
+// }
+// int test(int i)
+// {
+// 	if(i == 0)
+// 	{
+// 		throw std::runtime_error("Execption: Duplicated Header ");
+// 		return 0;
+// 	}
+// 	return(1);
+// }
 // int main()
 // {
-// 				std::ifstream myfile("index");
-// 				std::string buff,line;
-
-// 				if(myfile.good())
-// 				{
-// 					while(getline(myfile, buff))
-// 					{
-// 						line = line + buff + "\n";
-// 					}
-// 				}
-// 				else
-// 				std::cerr << "Error code: " << strerror(errno);
-// 					// std::cout << m.<<std::endl;
+// 	int i = 0;
+// 	int ret = 200;
+// 	try
+// 	{
+// 		ret = test(i);
+// 		std::cout <<ret<<std::endl;
+// 	}
+// 	catch(const std::exception& e)
+// 	{
+// 		std::cerr << e.what() << ret <<'\n';
+// 	}
+	
 // }
