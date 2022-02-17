@@ -93,8 +93,8 @@ namespace SERVER
 		std::cout << "New connection: Master socket " << std::to_string(sockFD) << ". Accept socket " + std::to_string(accptSockFD) << ", address " << inet_ntoa(_Adrress.sin_addr) << ":" << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
 		if (fcntl(accptSockFD, F_SETFL, O_NONBLOCK) == -1)
 			perror("ERROR] fcntl");
-		FD_SET(accptSockFD, &_socket._masterFDs);
-		FD_SET(accptSockFD, &_socket._writefds);
+		FD_SET(accptSockFD, &_socket._masterRFDs);
+		FD_SET(accptSockFD, &_socket._masterWFDS);
 		// _socket._masterSockFDs.push_back(accptSockFD);
 		if (accptSockFD > _maxSockFD)
 			_maxSockFD = accptSockFD;
@@ -114,7 +114,7 @@ namespace SERVER
 		Client *newClient = new Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr));
 
 		// _clients.push_back(Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr)));
-		_clients.push_back(*newClient);
+		_clients.push_back(newClient);
 		// _clientList.insert(std::pair<int, std::string>(accptSockFD, ""));
 		std::map<int, int>::iterator it = _accptMaster.find(accptSockFD);
 		if (it != _accptMaster.end())
@@ -132,13 +132,14 @@ namespace SERVER
 
 		while (running)
 		{
-			// FD_ZERO(&_readFDs);
-			// _readFDs = _socket._masterFDs;
-			FD_ZERO(&_socket._workingFDs);
-			_socket._workingFDs = _socket._masterFDs;
-			memcpy(&_socket._workingFDs, &_socket._masterFDs, sizeof(_socket._masterFDs));
+			// _readFDs = _socket._masterRFDs;
+			// FD_ZERO(&_socket._readFDs);
+			// FD_ZERO(&_socket._readFDs);
+			_socket._readFDs = _socket._masterRFDs;
+			_socket._writeFDs = _socket._masterWFDS;
+			// memcpy(&_socket._readFDs, &_socket._masterRFDs, sizeof(_socket._masterRFDs));
 			// poll kqueue
-			_activity = select(_maxSockFD + 1, &_socket._workingFDs, &_socket._writefds, NULL, NULL);
+			_activity = select(_maxSockFD + 1, &_socket._readFDs, &_socket._writeFDs, NULL, NULL);
 			if (_activity == -1)
 				perror("[ERROR] SELECT");
 			if (_activity > 0)
@@ -147,7 +148,7 @@ namespace SERVER
 				std::vector<int>::iterator it;
 				for (it = _masterSockFDs.begin(); it != _masterSockFDs.end(); it++)
 				{
-					if (FD_ISSET(*it, &_socket._workingFDs))
+					if (FD_ISSET(*it, &_socket._readFDs))
 					{
 						this->newClient(*it);
 						break;
@@ -156,12 +157,12 @@ namespace SERVER
 
 				for (size_t CurrentCli = 0; CurrentCli < _clients.size(); CurrentCli++)
 				{
-					Client &client = _clients[CurrentCli];
+					Client &client = *_clients[CurrentCli];
 					bool bool_treat = false;
 					int sockFD = client.getSockFd();
-					if (FD_ISSET(sockFD, &_socket._workingFDs) && client.getEndofReq() == false)
+					if (FD_ISSET(sockFD, &_socket._readFDs) && client.getEndofReq() == false)
 					{
-						std::cout << "Remplir reqqq\n";
+						std::cout << "Remplir reqqq getEndofReq " << client.getEndofReq() << std::endl;
 
 						char _buffRes[BUFFER_SIZE + 1];
 						bzero(_buffRes, sizeof(_buffRes));
@@ -173,13 +174,16 @@ namespace SERVER
 						{
 							std::cout << "Disconnected socket: " << std::to_string(sockFD) << std::endl;
 							close(sockFD);
-							FD_CLR(sockFD, &_socket._masterFDs);
-							FD_CLR(sockFD, &_socket._writefds);
+							FD_CLR(sockFD, &_socket._masterRFDs);
+							FD_CLR(sockFD, &_socket._masterWFDS);
 							if (sockFD == _maxSockFD)
-								_maxSockFD--;
-							_clientList.erase(sockFD);
+								while (FD_ISSET(_maxSockFD, &_socket._readFDs) == false)
+									_maxSockFD--;
+							// _clientList.erase(sockFD);
 							_clients.erase(_clients.begin() + CurrentCli);
 							CurrentCli--;
+							if (CurrentCli < 0)
+								break;
 						}
 						else if (valRead > 0)
 						{
@@ -230,53 +234,73 @@ namespace SERVER
 						}
 					}
 
-					if (FD_ISSET(sockFD, &_socket._writefds) && client.getReceived())
+					if (FD_ISSET(sockFD, &_socket._writeFDs) && client.getReceived())
 					{
 						int SendRet = 0;
 						std::string respStr = client.getRequest();
 						client.setLenReq(respStr.length());
-						puts("begin");
-						int leng = client.getLenReq() > 794000 ? 794000 : client.getLenReq();
+						int leng = client.getLenReq() > 294000 ? 294000 : client.getLenReq();
+						if (leng > 0)
+						{
+							puts("begin send");
+							SendRet = send(sockFD, respStr.c_str(), leng, 0);
+							puts("end send");
 
-						SendRet = send(sockFD, respStr.c_str(), leng, 0);
-						puts("end");
-
-						client.SendRetSnd(client.GetRetSnd() + SendRet);
-						std::cout << "SendRet : " << SendRet << " send lenght : " << client.GetRetSnd() << "req lenght " << client.getLenReq() << std::endl;
-						client.setRequest(client.getRequest().substr(SendRet, client.getLenReq()));
+							client.SendRetSnd(client.GetRetSnd() + SendRet);
+							try
+							{
+								client.setRequest(client.getRequest().substr(SendRet, client.getLenReq()));
+							}
+							catch (std::exception &e)
+							{
+								std::cout << e.what() << std::endl;
+							}
+						}
+						std::cout << "sockFD : " << sockFD << " SendRet : " << SendRet << " send lenght : " << client.GetRetSnd() << "req lenght " << client.getLenReq() << std::endl;
 						if (SendRet < 1)
 						{
 							puts("yes im in SendRet < 1");
 							close(sockFD);
-							FD_CLR(sockFD, &_socket._masterFDs);
-							FD_CLR(sockFD, &_socket._writefds);
-							_clientList.erase(sockFD);
+							FD_CLR(sockFD, &_socket._masterRFDs);
+							FD_CLR(sockFD, &_socket._masterWFDS);
+							// _clientList.erase(sockFD);
 							if (sockFD == _maxSockFD)
-								_maxSockFD--;
+								while (FD_ISSET(_maxSockFD, &_socket._masterRFDs) == false)
+									_maxSockFD--;
+							_clients.erase(_clients.begin() + CurrentCli);
 							CurrentCli--;
-							client.setReceived(false);
-							client.getRequest().clear();
+							// client.setReceived(false);
+							if (CurrentCli < 0)
+								break;
+							/*client.getRequest().clear();
 							bool_treat = true;
 							client.setLenReq(0);
 							client.SendRetSnd(0);
-							client.setgetEndofReq(false);
+							client.setgetEndofReq(false);*/
 						}
 						else if (client.getRequest().length() == 0)
 						{
 							puts("yes im in lenght == 0");
 							close(sockFD);
-							FD_CLR(sockFD, &_socket._masterFDs);
-							FD_CLR(sockFD, &_socket._writefds);
-							_clientList.erase(sockFD);
+							FD_CLR(sockFD, &_socket._masterRFDs);
+							FD_CLR(sockFD, &_socket._masterWFDS);
+							// _clientList.erase(sockFD);
 							if (sockFD == _maxSockFD)
-								_maxSockFD--;
+								while (FD_ISSET(_maxSockFD, &_socket._masterRFDs) == false)
+									_maxSockFD--;
+							puts("begin illegal");
+							_clients.erase(_clients.begin() + CurrentCli);
+							puts("fin illegal");
+
 							CurrentCli--;
-							client.setReceived(false);
-							client.getRequest().clear();
+							// client.setReceived(false);
+							if (CurrentCli < 0)
+								break;
+							/*client.getRequest().clear();
 							bool_treat = true;
 							client.setLenReq(0);
 							client.SendRetSnd(0);
-							client.setgetEndofReq(false);
+							client.setgetEndofReq(false);*/
 						}
 						else
 						{

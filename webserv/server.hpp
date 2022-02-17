@@ -41,10 +41,12 @@ namespace SERVER
 		int _masterSockFD;
 		struct sockaddr_in _Adrress;
 		socklen_t _addrLen;
-		fd_set _masterFDs;
-		fd_set _workingFDs;
+		fd_set _masterRFDs;
+		fd_set _masterWFDS;
 
-		fd_set _writefds;
+		fd_set _readFDs;
+		fd_set _writeFDs;
+
 		int _maxSockFD;
 
 	public:
@@ -57,15 +59,15 @@ namespace SERVER
 		// Getters
 		fd_set Getmasterfd()
 		{
-			return _masterFDs;
+			return _masterRFDs;
 		}
 	};
 
 	class ASERVER
 	{
 	private:
-		fd_set _masterFDs;
-		fd_set _writeFDs;
+		fd_set _masterRFDs;
+		fd_set _masterWFDS;
 		int _maxSockFD;
 		std::vector<int> _masterSockFDs;
 		std::vector<short> _ports;
@@ -75,7 +77,7 @@ namespace SERVER
 
 		fd_set _readFDs;
 		int _activity;
-		std::vector<Client> _clients;
+		std::vector<Client *> _clients;
 		std::map<int, std::string> _clientList;
 		std::map<int, int> _accptMaster;
 		ASOCKET _socket;
@@ -84,8 +86,8 @@ namespace SERVER
 		void launch()
 		{
 			_socket.SetupSocket();
-			this->_masterFDs = _socket._masterFDs;
-			this->_writeFDs = _socket._writefds;
+			this->_masterRFDs = _socket._masterRFDs;
+			this->_masterWFDS = _socket._masterWFDS;
 			this->_maxSockFD = _socket._maxSockFD;
 			this->_masterSockFDs = _socket._masterSockFDs;
 			this->_ports = _socket._ports;

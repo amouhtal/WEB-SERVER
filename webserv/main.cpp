@@ -20,6 +20,7 @@ void signal_handler(int signum)
 int main()
 {
     std::cout << "heree" << std::endl;
+    signal(SIGPIPE, SIG_IGN);
 
     SERVER::ASERVER runServer;
     signal(SIGINT, signal_handler);

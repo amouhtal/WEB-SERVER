@@ -15,8 +15,10 @@ namespace SERVER
 
         beginPort = _ports.begin();
         endPort = _ports.end();
-        FD_ZERO(&_masterFDs);
-        FD_ZERO(&_writefds);
+        FD_ZERO(&_masterRFDs);
+        FD_ZERO(&_masterWFDS);
+        FD_ZERO(&_readFDs);
+        FD_ZERO(&_writeFDs);
 
         std::cout << "Begin setup ..." << std::endl;
 
@@ -59,7 +61,7 @@ namespace SERVER
     {
         if (listen(_masterSockFD, BACKLOG) == -1)
             perror("[ERROR] in listen !");
-        FD_SET(_masterSockFD, &_masterFDs);
+        FD_SET(_masterSockFD, &_masterRFDs);
 
         _maxSockFD = (_masterSockFD > _maxSockFD) ? _masterSockFD : _maxSockFD;
         _masterSockFDs.push_back(_masterSockFD);

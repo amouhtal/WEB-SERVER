@@ -96,6 +96,11 @@ namespace SERVER
 		{
 			return (this->_sockFd != rhs._sockFd);
 		}
+		
+		bool operator==(Client const &rhs)
+		{
+			return (*this == rhs);
+		}
 
 		Client()
 		{
