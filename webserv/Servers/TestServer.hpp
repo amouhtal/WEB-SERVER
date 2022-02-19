@@ -57,6 +57,7 @@
 #endif
 
 #include "../Request/request.hpp"
+#include "../Request/response.hpp"
 #include "SimapleServer.hpp"
 #include "unistd.h"
 #include <iostream>
@@ -185,17 +186,17 @@ namespace WS
 
 			void responder()
 			{
-				url = "index.html";
-					int ret=0;
-				std::string file;
-				file = get_file(ret,url);
-				std::string hello = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
-				if(ret == -1)
-					std::cout<< hello<<"\n";
-				std::string leng = std::to_string(file.length());
-				hello = hello + leng + "\n\n" + file;
-				write(new_socket, hello.c_str(), strlen(hello.c_str()));
-				close(new_socket);
+				// url = "index.html";
+				// 	int ret=0;
+				// std::string file;
+				// file = get_file(ret,url);
+				// std::string hello = "HTTP/1.1 200 OK\nContent-Type: text/html\nContent-Length: ";
+				// if(ret == -1)
+				// 	std::cout<< hello<<"\n";
+				// std::string leng = std::to_string(file.length());
+				// hello = hello + leng + "\n\n" + file;
+				// write(new_socket, hello.c_str(), strlen(hello.c_str()));
+				// close(new_socket);
 				// if(method == "GET")
 				// {
 				// 	if(url[0] == '\0')

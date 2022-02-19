@@ -346,3 +346,8 @@ std::string	Request::get_protocol()
 {
 	return (this->protocol_version);
 }
+std::string	Request::get_header_value(std::string to_find)
+{
+	return (req_header.find(to_find)->second);
+}
+

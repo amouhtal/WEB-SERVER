@@ -5,6 +5,8 @@
 #include"request.hpp"
 #include "../ParssingConfig/DataServer.hpp"
 #include "../ParssingConfig/location.hpp"
+#include <fstream>
+#include <sstream>
 #define npos std::string::npos
 
 class Response
@@ -36,5 +38,8 @@ class Response
 	void	post_method();
 	void	delete_method();
 	void	build_header();
+	void	read_file(std::string file_path);
+	std::string getContentType();
+
 };
 #endif

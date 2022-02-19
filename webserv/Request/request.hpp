@@ -103,7 +103,8 @@ public:
     int get_status();
     std::string get_method();
     std::string get_url();
-    std::string get_protocol();\
+    std::string get_protocol();
+	std::string	get_header_value(std::string to_find);
 };
 
 #endif
