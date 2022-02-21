@@ -197,8 +197,8 @@ namespace SERVER
 						bzero(_buffRes, sizeof(_buffRes));
 						int valRead = recv(sockFD, _buffRes, BUFFER_SIZE, 0);
 						client.setRecRetSnd(client.GetRecRetSnd() + valRead);
-						std::cout << "valread :" << valRead << " " << client.GetRecRetSnd() << std::endl;
-						std::cout << "Activity in socket " << std::to_string(sockFD) << ", address: " << inet_ntoa(_Adrress.sin_addr) << ':' << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
+						// std::cout << "valread :" << valRead << " " << client.GetRecRetSnd() << std::endl;
+						// std::cout << "Activity in socket " << std::to_string(sockFD) << ", address: " << inet_ntoa(_Adrress.sin_addr) << ':' << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
 
 						if (valRead < 1)
 						{
@@ -226,7 +226,7 @@ namespace SERVER
 								Request r(client.getRequest(),30000,1);
 								r.parseRequest();
 							}
-							std::cout << "valread :" << valRead << std::endl;
+							// std::cout << "valread :" << valRead << std::endl;
 						}
 						// if (client.getEndofReq() == false)
 						// {
@@ -280,9 +280,9 @@ namespace SERVER
 						int SendRet = 0;
 						// std::string respStr = client.getRequest();
 						std::string respStr = resp.getHeader();
-						std::cout <<"===============================" <<std::endl;
-						std::cout <<respStr <<std::endl;
-						std::cout <<"===============================" <<std::endl;
+						// std::cout <<"===============================" <<std::endl;
+						// std::cout <<respStr <<std::endl;
+						// std::cout <<"===============================" <<std::endl;
 
 						client.setLenReq(respStr.length());
 						int leng = client.getLenReq() > 294000 ? 294000 : client.getLenReq();
@@ -300,7 +300,7 @@ namespace SERVER
 								std::cout << e.what() << std::endl;
 							}
 						}
-						std::cout << "sockFD : " << sockFD << " SendRet : " << SendRet << " send lenght : " << client.GetRetSnd() << "req lenght " << client.getLenReq() << std::endl;
+						// std::cout << "sockFD : " << sockFD << " SendRet : " << SendRet << " send lenght : " << client.GetRetSnd() << "req lenght " << client.getLenReq() << std::endl;
 						if (SendRet < 1)
 						{
 							puts("yes im in SendRet < 1");

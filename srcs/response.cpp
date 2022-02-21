@@ -37,7 +37,7 @@ void	Response::read_file(std::string file_path)
 {
 	std::ifstream file;
 	std::ostringstream streambuff;
-	file.open("/Users/amouhtal/Desktop/merge/html_pages/index.html", std::ios::binary);
+	file.open("/Users/mel-hamr/Desktop/mel-hamrV2/html_pages/index.html", std::ios::binary);
 	if (file.is_open())
 	 {
 		streambuff << file.rdbuf();
@@ -94,7 +94,7 @@ void	Response::get_method()
 
 void	Response::generate_response()
 {
-	// if (_request.get_method().compare("GET") == 0)
+	if (_request.get_method().compare("GET") == 0)
 		get_method();
 	// else if (_request.get_method().compare("POST") == 0)
 	// 	post_method();
@@ -105,7 +105,7 @@ void	Response::generate_response()
 }
 void    Response::init_response()
 {
-	// if(_status == OK)
+	if(_status == OK)
 		generate_response();
 }
 std::string Response::getHeader()

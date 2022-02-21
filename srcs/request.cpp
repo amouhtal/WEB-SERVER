@@ -9,7 +9,7 @@ Request::Request()
 	protocol_version ="";
 	boundary = "";
 	body_on = 0;
-	status_code = 0;
+	status_code = 200;
 	maxbody_size = 150;
 	request_error = 0;
 	is_valid = 0;
@@ -132,20 +132,20 @@ std::string Request::set_top_header(std::string &request)
 }
 void	Request::check_header_values(std::string str)
 {
-	if(str.find("Transfer-Encoding") != npos || str.find("Content-Length") != npos || str.find("Host") != npos )
+	if(str.find("Transfer-Encoding") != npos || str.find("Content-Length") != npos)
 	{
-	// if (str.find(":") == npos || std::count(str.begin(), str.end(), ':') > 1 || str.find(": ") == npos)
-	// {
-	// 	throw std::runtime_error("Exception: Syntax error a: " + str);
-	// }
-	if (str.find("Host") != npos && str.find("Host: ") == npos)
-		throw std::runtime_error("Exception: Syntax error : "+ str);
+	if (str.find(":") == npos || std::count(str.begin(), str.end(), ':') > 1 || str.find(": ") == npos)
+	{
+		throw std::runtime_error("Exception: Syntax error a: " + str);
+	}
 	if (str.find("Connection") != npos)
 	{
 		if (str.find("Connection: ") == npos)
 			throw std::runtime_error("Exception: Syntax error : " + str);
 	}
 	}
+	if (str.find("Host") != npos && str.find("Host: ") == npos)
+		throw std::runtime_error("Exception: Syntax error : "+ str);
 }
 
 void    Request::parseRequest()
@@ -209,6 +209,12 @@ void    Request::parseRequest()
 			}
 		}
 		// std::cout <<"|"<<buffer<<"|"<<std::endl;
+		std::cout << "=======================\n"; 
+		for(std::multimap<std::string ,std::string>::iterator it = req_header.begin(); it != req_header.end() ; it++)
+		{
+			std::cout << "key : " << it->first << "\t" <<"value : " << it->second <<std::endl;
+		}
+		std::cout << "=======================\n"; 
 		parseBody(buffer);
 	}
 	catch (const std::exception &e)
@@ -245,7 +251,7 @@ int Request::check_req_errors()
 			this->status_code = 400;
 		else if (!url.size() || (url.size() && url[0] != '/'))
 			this->status_code = 400;
-		else if (!req_header.count("Host:") < 1)
+		else if (req_header.count("Host:") < 1)
 			this->status_code = 400;
 		if (this->status_code == 400)
 		{
