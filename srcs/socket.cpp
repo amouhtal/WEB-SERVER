@@ -10,8 +10,8 @@ namespace SERVER
         std::vector<short>::iterator endPort;
 
         // parser
-        _ports.push_back(8020);
-        _ports.push_back(8021);
+        _ports.push_back(7779);
+        _ports.push_back(7778);
 
         beginPort = _ports.begin();
         endPort = _ports.end();

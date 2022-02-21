@@ -42,6 +42,7 @@ class Response
 	void	read_file(std::string file_path);
 	std::string getContentType();
 	std::string getHeader();
+		std::string find_file_name(std::string dispo);
 
 };
 #endif

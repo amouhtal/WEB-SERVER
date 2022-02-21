@@ -91,13 +91,48 @@ void	Response::get_method()
 {
 	read_file(_request.get_url());
 }
-
+std::string	Response::find_file_name(std::string dispo)
+{
+	std::string tmp = dispo.substr(dispo.find("filename=") + 10);
+	tmp = tmp.substr(0,tmp.find("\""));
+	return tmp;
+}
+void	Response::post_method()
+{
+	std::string file_dir;
+	std::string buffer;
+	for (size_t i = 0; i < _request.getBodys().size(); i++)
+		{
+				puts("============here");
+			// dispoFilename = getDispContentFilename(_request.getBody()[i].contentDesp);
+			// if (!isDirectory(getUploadDir()))
+			// 	setErrorPage(NOT_FOUND_STATUS);
+			// else
+			// {
+				// fileDir = getUploadDir().append(dispoFilename);
+				file_dir = "/Users/mel-hamr/Desktop/mel-hamrV2/" + find_file_name(_request.getBodys()[i].Content_Disposition);
+				if (access(file_dir.c_str(), F_OK) == 0 && access(file_dir.c_str(), W_OK) != 0)
+				{
+					// setErrorPage(FORBIDDEN_STATUS);
+					return;
+				}
+				std::ofstream file(file_dir);
+				std::stringstream ss(_request.getBodys()[i].content);
+				while (std::getline(ss, buffer))
+				{
+					file << buffer.append("\n");
+				}
+				file.close();
+				_body = "<html><head><body><div><h5>File Uploaded successfully</h5></div></body></head></html>";
+			// }
+		}
+}
 void	Response::generate_response()
 {
 	if (_request.get_method().compare("GET") == 0)
 		get_method();
-	// else if (_request.get_method().compare("POST") == 0)
-	// 	post_method();
+	else if (_request.get_method().compare("POST") == 0)
+		post_method();
 	// else if (_request.get_method().compare("POST") == 0)
 	// 	delete_method();
 	// if (_status == OK || _status == MOVED_PERMANENTLY)
@@ -105,7 +140,7 @@ void	Response::generate_response()
 }
 void    Response::init_response()
 {
-	if(_status == OK)
+	// if(_status == OK)
 		generate_response();
 }
 std::string Response::getHeader()
