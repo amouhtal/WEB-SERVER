@@ -67,7 +67,7 @@ Request &Request::operator=(const Request &rhs)
 		this->url = rhs.url;
 		this->protocol_version = rhs.protocol_version;
 		this->req_header =rhs.req_header;
-		this->req_body = req_body;
+		this->req_body = rhs.req_body;
 		this->body_on = rhs.body_on;
 		this->status_code = rhs.status_code;
 		this->maxbody_size = rhs.maxbody_size;
@@ -358,7 +358,6 @@ void	Request::parseBody(std::string buffer)
 		{
 			while (buffer.length() != 0)
 			{
-				std::cout <<"|"<< buffer<<"|"<<std::endl;
 				str = buffer.substr(0,buffer.find("\n"));
 				if (str.back() == '\r')
 					str.pop_back();
@@ -369,8 +368,6 @@ void	Request::parseBody(std::string buffer)
 		if(this->body.size())
 			body_on++;
 	}
-	std::cout <<"|||"<< body_list.size() << std::endl;
-
 	// std::cout << "=========================\n";
 	// for(std::vector<Body>::iterator it= body_list.begin() ; it != body_list.end();it++)
 	// {

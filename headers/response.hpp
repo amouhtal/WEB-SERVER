@@ -6,7 +6,8 @@
 #include "DataServer.hpp"
 #include "location.hpp"
 #include <fstream>
-#include <sstream>#define CONTINUE 100
+#include <sstream>
+#define CONTINUE 100
 #define SWITCHINGPROTOCOL 101
 
 // Successful 2xx
@@ -91,6 +92,8 @@ class Response
 	std::string find_file_name(std::string dispo);
 	void	set_error_page(int code);
 	void	read_error_file(std::string error_path);
+	void	read_default_error_file(int status);
+
 
 };
 #endif

@@ -34,7 +34,25 @@ Response::Response(dataserver &server,Request &request,int port) : _request(requ
 }
 void	Response::read_error_file(std::string error_path)
 {
+	std::ifstream file(error_path);
+	if (file)
+	{
+		std::ostringstream ss;
+		ss << file.rdbuf();
+		_body = ss.str();
+	}
+	else
+		read_default_error_file(_status);
 
+}
+void	Response::read_default_error_file(int status)
+{
+	std::ifstream file("../default_error/default_error.html");
+	std::ostringstream ss;
+	ss << file.rdbuf();
+	_body = ss.str();
+	_body.replace(_body.find("$1"), 2, std::to_string(status));
+	_body.replace(_body.find("$2"), 2, _errors[status]);
 }
 void	Response::set_error_page(int code)
 {
@@ -42,25 +60,26 @@ void	Response::set_error_page(int code)
 	if (data_server.getError_page()[_status].length())
 		read_error_file(data_server.getError_page()[_status]);
 	else
-		_body = getDefaultErrorPage(_status);
-	manageErrorHeaders(_status);
+	read_default_error_file(_status);
+	// manageErrorHeaders(_status);
 }
 void	Response::read_file(std::string file_path)
 {
 	std::ostringstream streambuff;
 	std::string file_to_open = data_server.getRoot() + file_path;
-	if (access(file_path.c_str(), F_OK) != 0)
+	if (access(file_to_open.c_str(), F_OK) != 0)
 		set_error_page(NOT_FOUND);
 	else
 	{
-		if (access(file_path.c_str(), R_OK) == 0)
+		if (access(file_to_open.c_str(), R_OK) == 0)
 		{
-			std::ifstream file(file_path);
+			std::ifstream file(file_to_open);
 			if (file)
 			{
 				std::ostringstream ss;
 				ss << file.rdbuf();
 				_body = ss.str();
+				puts("here");
 			}
 			else
 				set_error_page(INTERNAL_SERVER_ERROR);
