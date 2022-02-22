@@ -20,7 +20,7 @@ namespace SERVER
         FD_ZERO(&_readFDs);
         FD_ZERO(&_writeFDs);
 
-        std::cout << "Begin setup ..." << std::endl;
+        std::cout << "Begin setup ...  " << std::endl;
 
         for (beginPort; beginPort != endPort; beginPort++)
         {
