@@ -105,6 +105,8 @@ public:
     std::string get_url();
     std::string get_protocol();
 	std::string	get_header_value(std::string to_find);
+    std::vector<Body> getBodys();
+
 };
 
 #endif
