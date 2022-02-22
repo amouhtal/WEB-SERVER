@@ -44,7 +44,7 @@ Request::Request(const std::string buffer, int maxbody_size, int is_valid)
 	url_queary = "";
 	boundary = "";
 	body_on = 0;
-	status_code = 0;
+	status_code = 200;
 	request_error = 0;
 	req_header.insert(std::make_pair<std::string,std::string>("Connection","close"));
 

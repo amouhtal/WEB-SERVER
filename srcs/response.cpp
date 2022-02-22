@@ -32,18 +32,55 @@ Response::Response(dataserver &server,Request &request,int port) : _request(requ
 	this->_errors[504] = "Gateway Timeout";
 	this->_errors[505] = "HTTP Version Not Supported";
 }
+void	Response::read_error_file(std::string error_path)
+{
 
+}
+void	Response::set_error_page(int code)
+{
+	_status = code;
+	if (data_server.getError_page()[_status].length())
+		read_error_file(data_server.getError_page()[_status]);
+	else
+		_body = getDefaultErrorPage(_status);
+	manageErrorHeaders(_status);
+}
 void	Response::read_file(std::string file_path)
 {
-	std::ifstream file;
 	std::ostringstream streambuff;
-	file.open("/Users/mel-hamr/Desktop/mel-hamrV2/html_pages/index.html", std::ios::binary);
-	if (file.is_open())
-	 {
-		streambuff << file.rdbuf();
-		_body = streambuff.str();
-		file.close();
-     }
+	std::string file_to_open = data_server.getRoot() + file_path;
+	if (access(file_path.c_str(), F_OK) != 0)
+		set_error_page(NOT_FOUND);
+	else
+	{
+		if (access(file_path.c_str(), R_OK) == 0)
+		{
+			std::ifstream file(file_path);
+			if (file)
+			{
+				std::ostringstream ss;
+				ss << file.rdbuf();
+				_body = ss.str();
+			}
+			else
+				set_error_page(INTERNAL_SERVER_ERROR);
+			file.close();
+		}
+		else
+			set_error_page(FORBIDEN);
+	}
+	// if (file.good())
+	// {
+	// 	file.open(file_to_open, std::ios::binary);
+	// 	if(file.is_open())
+	// 	{
+	// 		streambuff << file.rdbuf();
+	// 		_body = streambuff.str();
+	// 		file.close();
+	// 	}
+	// }
+	// else
+	// 	set_error_body(NOT_FOUND);
 }
 std::string Response::getContentType()
 {
@@ -140,8 +177,9 @@ void	Response::generate_response()
 }
 void    Response::init_response()
 {
-	// if(_status == OK)
+	if(_status == OK)
 		generate_response();
+	std::cout <<"==>"<< _status << std::endl;
 }
 std::string Response::getHeader()
 {
