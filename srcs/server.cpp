@@ -120,6 +120,8 @@ namespace SERVER
 		if (accptSockFD == -1)
 			perror("[ERROR] Socket");
 		std::cout << "New connection: Master socket " << std::to_string(sockFD) << ". Accept socket " + std::to_string(accptSockFD) << ", address " << inet_ntoa(_Adrress.sin_addr) << ":" << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
+		std::string test = inet_ntoa(_Adrress.sin_addr);
+		
 		if (fcntl(accptSockFD, F_SETFL, O_NONBLOCK) == -1)
 			perror("ERROR] fcntl");
 		FD_SET(accptSockFD, &_socket._masterRFDs);
@@ -150,6 +152,7 @@ namespace SERVER
 			it->second = sockFD;
 		else
 			_accptMaster.insert(std::pair<int, int>(accptSockFD, sockFD));
+		
 	}
 
 	void ASERVER::waitClients()
@@ -217,14 +220,17 @@ namespace SERVER
 						}
 						else if (valRead > 0)
 						{
+							
 							client.appendReq(_buffRes);
 							// std::cout << std::endl
 							// 		  << "request string : " << client.getRequest() << std::endl;
 							client.setReceived(checkReq(client));
 							if(client.getReceived())
 							{
+								// std::cout << "|" << client.getRequest() << "|" <<std::endl;
 								Request r(client.getRequest(),30000,1);
 								r.parseRequest();
+								_requset = r;
 							}
 							// std::cout << "valread :" << valRead << std::endl;
 						}

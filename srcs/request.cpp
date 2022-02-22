@@ -44,7 +44,7 @@ Request::Request(const std::string buffer, int maxbody_size, int is_valid)
 	url_queary = "";
 	boundary = "";
 	body_on = 0;
-	status_code = 0;
+	status_code = 200;
 	request_error = 0;
 	req_header.insert(std::make_pair<std::string,std::string>("Connection","close"));
 
@@ -59,18 +59,21 @@ Request &Request::operator=(const Request &rhs)
 {
 	if (this != &rhs)
 	{
+		this->request_string = rhs.request_string;
+		this->boundary = rhs.boundary;
+		this->url_queary = rhs.url_queary;
 		this->body = rhs.body;
 		this->method = rhs.method;
 		this->url = rhs.url;
 		this->protocol_version = rhs.protocol_version;
-		this->url_queary = rhs.url_queary;
+		this->req_header =rhs.req_header;
+		this->req_body = rhs.req_body;
 		this->body_on = rhs.body_on;
 		this->status_code = rhs.status_code;
 		this->maxbody_size = rhs.maxbody_size;
 		this->request_error = rhs.request_error;
 		this->is_valid = rhs.is_valid;
-		this->request_string = rhs.request_string;
-		this->boundary = rhs.boundary;
+		this->body_list = rhs.body_list;
 	}
 	return *this;
 }
@@ -209,12 +212,13 @@ void    Request::parseRequest()
 			}
 		}
 		// std::cout <<"|"<<buffer<<"|"<<std::endl;
-		std::cout << "=======================\n"; 
-		for(std::multimap<std::string ,std::string>::iterator it = req_header.begin(); it != req_header.end() ; it++)
-		{
-			std::cout << "key : " << it->first << "\t" <<"value : " << it->second <<std::endl;
-		}
-		std::cout << "=======================\n"; 
+		// std::cout << "=======================\n";
+		// std::cout << method << std::endl; 
+		// for(std::multimap<std::string ,std::string>::iterator it = req_header.begin(); it != req_header.end() ; it++)
+		// {
+		// 	std::cout << "key : " << it->first << "\t" <<"value : " << it->second <<std::endl;
+		// }
+		// std::cout << "=======================\n"; 
 		parseBody(buffer);
 	}
 	catch (const std::exception &e)
@@ -277,16 +281,47 @@ Body Request::get_bodys(std::string body)
 		{
 		str = body.substr(0, leng);
 		if(str.find("Content-Disposition:") == 0 )
-			tmp_body.Content_Disposition = str.substr(str.find(":")+1, str.length());
+			tmp_body.Content_Disposition = str.substr(str.find(":")+2, str.length());
 		else if(str.find("Content-Type:") == 0 )
-			tmp_body.Content_Type = str.substr(str.find(":") + 1, str.length());
+			tmp_body.Content_Type = str.substr(str.find(":") + 2, str.length());
 		else
-			tmp_body.content += str;
+			tmp_body.content += str + "\n";
 		}
 		body = body.substr(leng+1, body.length());
 	}
+	// std::cout << tmp_body.content << std::endl;
+	// std::cout << tmp_body.Content_Disposition << std::endl;
+	// std::cout << tmp_body.Content_Type << std::endl;
 	return(tmp_body);
 }
+
+std::string retf(std::string body, std::string boundary)
+{
+	std::string newBody = "";
+
+	std::string hex_string;
+	int start;
+	int fin;
+
+	while (newBody.find(boundary+ "--") == npos)
+	{
+		try
+		{
+			start = body.find("\r\n") + 2;
+			hex_string = body.substr(0, body.find("\r\n"));	
+			fin = stoi(hex_string, 0, 16);
+			body = body.substr(start);
+			newBody += body.substr(0, fin);
+			body = body.substr(fin + 2);
+		}
+		catch(const std::exception& e)
+		{
+			std::cerr << e.what() << '\n';
+		}
+	}
+	return newBody;
+}
+
 void	Request::parseBody(std::string buffer)
 {
 	int len = 0;
@@ -295,11 +330,12 @@ void	Request::parseBody(std::string buffer)
 	std::string body_tmp;
 	size_t start;
 	size_t end;
-	// buffer = "--hello\nContent-Disposition: form-data; name=\"description\"\nsome text\n--hello\nContent-Disposition: form-data; name=\"myFile\"; filename=\"foo.txt\"\nContent-Type: text/plain\n(content of the uploaded file foo.txt)\n--hello--\r";
+
 	body_tmp =buffer;
 	if(req_header.count("boundary") > 0)
 	{
 		boundary = "--" + req_header.find("boundary")->second;
+		body_tmp = retf(buffer, boundary);
 		start = body_tmp.find(boundary) + boundary.length();
 		end = body_tmp.length();
 		body_tmp = body_tmp.substr(start, end);
@@ -307,8 +343,8 @@ void	Request::parseBody(std::string buffer)
 		{
 			tmp = body_tmp.substr(1, body_tmp.find(boundary)-1);
 			body_list.push_back(get_bodys(tmp));
-			// if(body.find(boundary + "--\r") == body.find(boundary))
-			// 	break;
+			if(body.find(boundary + "--\r") == body.find(boundary))
+				break;
 			body_tmp = body_tmp.substr(body_tmp.find(boundary) + boundary.length(),body_tmp.length());
 		}
 	}
@@ -322,7 +358,6 @@ void	Request::parseBody(std::string buffer)
 		{
 			while (buffer.length() != 0)
 			{
-				std::cout <<"|"<< buffer<<"|"<<std::endl;
 				str = buffer.substr(0,buffer.find("\n"));
 				if (str.back() == '\r')
 					str.pop_back();
@@ -333,7 +368,15 @@ void	Request::parseBody(std::string buffer)
 		if(this->body.size())
 			body_on++;
 	}
-	std::cout << "|"<< this->body<<"|"<<std::endl;
+	// std::cout << "=========================\n";
+	// for(std::vector<Body>::iterator it= body_list.begin() ; it != body_list.end();it++)
+	// {
+	// 	std::cout << (*it).content << std::endl;
+	// 	std::cout << (*it).Content_Disposition << std::endl;
+	// 	std::cout << (*it).Content_Type << std::endl;
+	// }
+	// std::cout << "=========================\n";
+
 }
 
 int	Request::get_status()
@@ -357,3 +400,7 @@ std::string	Request::get_header_value(std::string to_find)
 	return (req_header.find(to_find)->second);
 }
 
+std::vector<Body> Request::getBodys()
+{
+	return this->body_list;
+}
