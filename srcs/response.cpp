@@ -79,7 +79,6 @@ void	Response::read_file(std::string file_path)
 				std::ostringstream ss;
 				ss << file.rdbuf();
 				_body = ss.str();
-				puts("here");
 			}
 			else
 				set_error_page(INTERNAL_SERVER_ERROR);
@@ -159,14 +158,13 @@ void	Response::post_method()
 	std::string buffer;
 	for (size_t i = 0; i < _request.getBodys().size(); i++)
 		{
-				puts("============here");
 			// dispoFilename = getDispContentFilename(_request.getBody()[i].contentDesp);
 			// if (!isDirectory(getUploadDir()))
 			// 	setErrorPage(NOT_FOUND_STATUS);
 			// else
 			// {
 				// fileDir = getUploadDir().append(dispoFilename);
-				file_dir = "/Users/mel-hamr/Desktop/mel-hamrV2/" + find_file_name(_request.getBodys()[i].Content_Disposition);
+				file_dir = "/Users/amouhtal/Desktop/web-server/" + find_file_name(_request.getBodys()[i].Content_Disposition);
 				if (access(file_dir.c_str(), F_OK) == 0 && access(file_dir.c_str(), W_OK) != 0)
 				{
 					// setErrorPage(FORBIDDEN_STATUS);
@@ -196,9 +194,8 @@ void	Response::generate_response()
 }
 void    Response::init_response()
 {
-	if(_status == OK)
+	// if(_status == OK)
 		generate_response();
-	std::cout <<"==>"<< _status << std::endl;
 }
 std::string Response::getHeader()
 {

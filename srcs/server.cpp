@@ -39,9 +39,9 @@ namespace SERVER
 		{
 			std::string header = request.substr(begin, end - begin);
 
-			if ((find_pos = header.find("Transfer-Encoding: chunked")) != npos && find_pos == 0)
-				return (2);
-			else if ((find_pos = header.find("Content-Length")) != npos && find_pos == 0)
+			// if ((find_pos = header.find("Transfer-Encoding: chunked")) != npos && find_pos == 0)
+			// 	return (2);
+			if ((find_pos = header.find("Content-Length")) != npos && find_pos == 0)
 				return (1);
 			else if ((find_pos = header.find("\r\n\r\n")) != npos && find_pos == 0)
 				return (0);
@@ -72,27 +72,11 @@ namespace SERVER
 			// std::cout << "2\n";
 
 			body = request.substr(pos + 4, request.length() - (pos + 4));
-			std::cout << "lenght " << body.length() << " -> " << getContentLen(request) << std::endl;
+			// std::cout << "lenght " << body.length() << " -> " << getContentLen(request) << std::endl;
 			// exit(1);
-			printf("pos:/ %d content-lenght : %d\n", client.GetRecRetSnd() - (pos + 4), getContentLen(request));
-			if (client.GetRecRetSnd() - (pos + 4) == getContentLen(request))
+			// printf("pos:/ %d content-lenght : %d\n", client.GetRecRetSnd() - (pos + 4), getContentLen(request));
+			if (client.GetRecRetSnd() - (pos + 4) >= getContentLen(request))
 			{
-				std::ifstream file;
-				std::ostringstream streambuff;
-				std::cout << client.getRequest() << std::endl;
-				std::ofstream supp_info_output("/Users/amouhtal/Desktop/web-serv/webserv/new3.ico",  std::ios::out | std::ios::binary);
-
-				supp_info_output.write(body.c_str(), getContentLen(request));
-				supp_info_output.close();
-				file.open("/Users/amouhtal/Desktop/web-serv/webserv/new3.ico",  std::ios::in | std::ios::out | std::ios::binary);
-				if (file.is_open())
-				{
-					// body << file.get();
-					std::istringstream gfg1(body);
-					//file << body.c_str();
-					// bodyMessage = streambuff.str();
-					file.close();
-				}
 				return (true);
 			}
 			// if (body.length() == getContentLen(request))
@@ -121,7 +105,7 @@ namespace SERVER
 			perror("[ERROR] Socket");
 		std::cout << "New connection: Master socket " << std::to_string(sockFD) << ". Accept socket " + std::to_string(accptSockFD) << ", address " << inet_ntoa(_Adrress.sin_addr) << ":" << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
 		std::string test = inet_ntoa(_Adrress.sin_addr);
-		
+
 		if (fcntl(accptSockFD, F_SETFL, O_NONBLOCK) == -1)
 			perror("ERROR] fcntl");
 		FD_SET(accptSockFD, &_socket._masterRFDs);
@@ -152,7 +136,6 @@ namespace SERVER
 			it->second = sockFD;
 		else
 			_accptMaster.insert(std::pair<int, int>(accptSockFD, sockFD));
-		
 	}
 
 	void ASERVER::waitClients()
@@ -194,11 +177,13 @@ namespace SERVER
 					int sockFD = client.getSockFd();
 					if (FD_ISSET(sockFD, &_socket._readFDs) && client.getEndofReq() == false)
 					{
-						std::cout << "Remplir reqqq getEndofReq " << client.getEndofReq() << std::endl;
+						// std::cout << "Remplir reqqq getEndofReq " << client.getEndofReq() << std::endl;
 
 						char _buffRes[BUFFER_SIZE + 1];
 						bzero(_buffRes, sizeof(_buffRes));
 						int valRead = recv(sockFD, _buffRes, BUFFER_SIZE, 0);
+						// std::cout<< valRead << std::endl;
+						// std::cout<< _buffRes << std::endl;
 						client.setRecRetSnd(client.GetRecRetSnd() + valRead);
 						// std::cout << "valread :" << valRead << " " << client.GetRecRetSnd() << std::endl;
 						// std::cout << "Activity in socket " << std::to_string(sockFD) << ", address: " << inet_ntoa(_Adrress.sin_addr) << ':' << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
@@ -220,15 +205,17 @@ namespace SERVER
 						}
 						else if (valRead > 0)
 						{
-							
-							client.appendReq(_buffRes);
+
+							client.appendReq(_buffRes, valRead);
 							// std::cout << std::endl
 							// 		  << "request string : " << client.getRequest() << std::endl;
 							client.setReceived(checkReq(client));
-							if(client.getReceived())
+							if (client.getReceived())
 							{
-								// std::cout << "|" << client.getRequest() << "|" <<std::endl;
-								Request r(client.getRequest(),30000,1);
+							std::cout << "|" << client.getRequest() << "|" <<std::endl;
+								// puts("Im here");
+								// exit(1);
+								Request r(client.getRequest(), 30000000, 1);
 								r.parseRequest();
 								_requset = r;
 							}
@@ -280,8 +267,8 @@ namespace SERVER
 					{
 						// puts("writing step");
 						// exit(0);
-						
-						Response resp(_data_server,_requset,80);
+
+						Response resp(_data_server, _requset, 80);
 						resp.init_response();
 						int SendRet = 0;
 						// std::string respStr = client.getRequest();
@@ -330,7 +317,7 @@ namespace SERVER
 						}
 						else if (client.getRequest().length() == 0)
 						{
-							puts("yes im in lenght == 0");
+							// puts("yes im in lenght == 0");
 							close(sockFD);
 							FD_CLR(sockFD, &_socket._masterRFDs);
 							FD_CLR(sockFD, &_socket._masterWFDS);
@@ -366,12 +353,12 @@ namespace SERVER
 			// usleep(2000);
 		}
 	}
-	Request	ASERVER::getRequest()
+	Request ASERVER::getRequest()
 	{
 		return this->_requset;
 	}
 
-	dataserver	ASERVER::getDataServer()
+	dataserver ASERVER::getDataServer()
 	{
 		return this->_data_server;
 	}

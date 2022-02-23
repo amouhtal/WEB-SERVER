@@ -22,7 +22,7 @@ namespace SERVER
 
         std::cout << "Begin setup ...  " << std::endl;
 
-        for (beginPort; beginPort != endPort; beginPort++)
+        for (; beginPort != endPort; beginPort++)
         {
             _port = *beginPort;
             CreatSocket();

@@ -66,9 +66,19 @@ namespace SERVER
 		{
 			_endOfReq = getEndofReq;
 		}
-		void appendReq(char *request)
+		void appendReq(char *request, int lenght)
 		{
-			_request += request;
+	
+			try
+			{
+				/* code */
+			_request.append(request, lenght);
+			}
+			catch(const std::exception& e)
+			{
+				std::cerr << e.what() << '\n';
+			}
+			
 		}
 
 		std::string &getRequest()
@@ -88,6 +98,7 @@ namespace SERVER
 			this->_request = rhs._request;
 			this->_endOfReq = rhs._endOfReq;
 			this->_received = rhs._received;
+			return *this;
 		}
 
 		int getSockFd()
