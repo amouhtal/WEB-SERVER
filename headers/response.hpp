@@ -93,7 +93,7 @@ class Response
 	void	set_error_page(int code);
 	void	read_error_file(std::string error_path);
 	void	read_default_error_file(int status);
-
+	void build_error_header(int	_status);
 
 };
 #endif

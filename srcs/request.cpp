@@ -292,6 +292,7 @@ Body Request::get_bodys(std::string body)
 	// std::cout << tmp_body.content << std::endl;
 	// std::cout << tmp_body.Content_Disposition << std::endl;
 	// std::cout << tmp_body.Content_Type << std::endl;
+	tmp_body.content.erase(0,1);
 	return(tmp_body);
 }
 
@@ -335,7 +336,8 @@ void	Request::parseBody(std::string buffer)
 	if(req_header.count("boundary") > 0)
 	{
 		boundary = "--" + req_header.find("boundary")->second;
-		body_tmp = retf(buffer, boundary);
+		if(req_header.count("Transfer-Encoding:") >= 1 &&(req_header.find("Transfer-Encoding:")->second.find("chunked") != npos))
+			body_tmp = retf(buffer, boundary);
 		start = body_tmp.find(boundary) + boundary.length();
 		end = body_tmp.length();
 		body_tmp = body_tmp.substr(start, end);
@@ -376,7 +378,6 @@ void	Request::parseBody(std::string buffer)
 	// 	std::cout << (*it).Content_Type << std::endl;
 	// }
 	// std::cout << "=========================\n";
-
 }
 
 int	Request::get_status()
