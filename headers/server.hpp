@@ -25,7 +25,7 @@
 #include"parssingfile.hpp"
 #include "request.hpp"
 #include "response.hpp"
-#define BUFFER_SIZE 5000
+#define BUFFER_SIZE 99
 #define CHUNKED 2
 #define running 1
 
