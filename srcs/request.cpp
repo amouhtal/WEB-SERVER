@@ -12,7 +12,6 @@ Request::Request()
 	status_code = 200;
 	maxbody_size = 150;
 	request_error = 0;
-	is_valid = 0;
 }
 int	Request::count_words(std::string str)
 {
@@ -31,11 +30,10 @@ int	Request::count_words(std::string str)
 	}
 	return count;
 }
-Request::Request(const std::string buffer, int maxbody_size, int is_valid)
+Request::Request(const std::string buffer, int maxbody_size)
 {
 	request_string = buffer;
 	this->maxbody_size = maxbody_size;
-	this->is_valid = is_valid;
 
 	body ="21";
 	method ="";
@@ -72,7 +70,6 @@ Request &Request::operator=(const Request &rhs)
 		this->status_code = rhs.status_code;
 		this->maxbody_size = rhs.maxbody_size;
 		this->request_error = rhs.request_error;
-		this->is_valid = rhs.is_valid;
 		this->body_list = rhs.body_list;
 	}
 	return *this;
@@ -292,7 +289,12 @@ Body Request::get_bodys(std::string body)
 	// std::cout << tmp_body.content << std::endl;
 	// std::cout << tmp_body.Content_Disposition << std::endl;
 	// std::cout << tmp_body.Content_Type << std::endl;
-	tmp_body.content.erase(0,1);
+	// std::cout << "||" << tmp_body.content.find("\r\n") << std::endl;
+	tmp_body.content = tmp_body.content.substr(2);
+
+
+	tmp_body.content.pop_back();
+	tmp_body.content.pop_back();
 	return(tmp_body);
 }
 
@@ -373,7 +375,7 @@ void	Request::parseBody(std::string buffer)
 	// std::cout << "=========================\n";
 	// for(std::vector<Body>::iterator it= body_list.begin() ; it != body_list.end();it++)
 	// {
-	// 	std::cout << (*it).content << std::endl;
+	// 	std::cout <<"||||" << (*it).content<<"||"<< std::endl;
 	// 	std::cout << (*it).Content_Disposition << std::endl;
 	// 	std::cout << (*it).Content_Type << std::endl;
 	// }

@@ -63,6 +63,7 @@ void	Response::read_error_file(std::string error_path)
 	std::ifstream file(error_path);
 	if (file)
 	{
+
 		std::ostringstream ss;
 		ss << file.rdbuf();
 		_body = ss.str();
@@ -73,7 +74,7 @@ void	Response::read_error_file(std::string error_path)
 }
 void	Response::read_default_error_file(int status)
 {
-	std::ifstream file("/Users/mel-hamr/Desktop/mel-hamrV2/default_error/default_error.html");
+	std::ifstream file("/Users/mel-hamr/Desktop/web-server/default_error/default_error.html");
 	std::ostringstream ss;
 	ss << file.rdbuf();
 	_body = ss.str();
@@ -91,10 +92,24 @@ void	Response::set_error_page(int code)
 	}
 	else
 	{
-	read_default_error_file(_status);
+		read_default_error_file(_status);
 	}
+
 	build_error_header(_status);
 }
+bool Response::is_directory(const std::string &path)
+{
+	std::string s = path;
+	DIR *r;
+
+	if ((r = opendir(s.c_str())))
+	{
+		closedir(r);
+		return true;
+	}
+	return false;
+}
+
 void	Response::read_file(std::string file_path)
 {
 	std::ostringstream streambuff;
@@ -102,7 +117,7 @@ void	Response::read_file(std::string file_path)
 	// std::cout << "=>" <<file_to_open << std::endl;
 	if (access(file_to_open.c_str(), F_OK) != 0)
 	{
-		puts("before here");
+
 		set_error_page(NOT_FOUND);
 	}
 	else
@@ -180,9 +195,18 @@ void	Response::build_header()
 	}
 	this->_headers.append("\r\n\r\n");
 	this->_headers.append(_body);
+	
+}
+std::string	Response::get_root(std::string)
+{
+	if(_LocExist&& _location.getL_Root().size())
+		return _location.getL_Root();
+	else
+		return data_server.getRoot();
 }
 void	Response::get_method()
 {
+	std::string rooted_path = get_root(_request.get_url());
 	read_file(_request.get_url());
 }
 std::string	Response::find_file_name(std::string dispo)
@@ -203,10 +227,11 @@ void	Response::post_method()
 			// else
 			// {
 				// fileDir = getUploadDir().append(dispoFilename);
-				file_dir = "/Users/amouhtal/Desktop/web-server/" + find_file_name(_request.getBodys()[i].Content_Disposition);
+
+				file_dir = "/Users/mel-hamr/Desktop/web-server/" + find_file_name(_request.getBodys()[i].Content_Disposition);
 				if (access(file_dir.c_str(), F_OK) == 0 && access(file_dir.c_str(), W_OK) != 0)
 				{
-					// setErrorPage(FORBIDDEN_STATUS);
+					set_error_page(FORBIDEN);
 					return;
 				}
 				std::ofstream file(file_dir);
@@ -220,20 +245,87 @@ void	Response::post_method()
 			// }
 		}
 }
+bool Response::find_location()
+{
+	std::string uri = _request.get_url();
+    if (uri[0] != '/')
+        uri = "/" + uri; 
+    std::map<std::string, location>::iterator it = data_server.Location.begin();//Location.begin();
+    // looking for exact match
+    for (; it != data_server.Location.end(); it++) {
+        if (it->first == uri) {
+			_location = it->second;
+            return (true);
+        }
+    }
+
+    // no exact match found: looking for the longest match
+    it = data_server.Location.begin();
+    size_t pos = uri.length();
+
+    while (pos != 0) {
+        pos = uri.rfind("/", pos - 1);
+        for (; it != data_server.Location.end(); it++) {
+            if (!strncmp(uri.c_str(), it->first.c_str(), pos))
+            {
+				_location = it->second;
+				return true;
+			}
+			if (it->first == "/")
+            {
+				_location = it->second;
+				return true;
+			}
+        }
+    }
+    return (false);
+}
+void	Response::delete_method()
+{
+	// std::string directoryPath = getPath(getUriFilePath(_request.getStartLineVal("uri")));
+
+	// if (isDirectory(directoryPath))
+	// 	setErrorPage(NOT_FOUND_STATUS);
+	// else
+	// {
+	// 	if (access(directoryPath.c_str(), F_OK) != 0)
+	// 		setErrorPage(NOT_FOUND_STATUS);
+	// 	else
+	// 	{
+	// 		if (access(directoryPath.c_str(), W_OK) == 0)
+	// 		{
+	// 			if (std::remove(directoryPath.c_str()) != 0)
+	// 				setErrorPage(INTERNAL_SERVER_ERROR_STATUS);
+	// 		}
+	// 		else
+	// 			setErrorPage(FORBIDDEN_STATUS);
+	// 	}
+	// }
+}
 void	Response::generate_response()
 {
-	if (_request.get_method().compare("GET") == 0)
-		get_method();
-	else if (_request.get_method().compare("POST") == 0)
-		post_method();
-	// else if (_request.get_method().compare("POST") == 0)
-	// 	delete_method();
-	if (_status == OK || _status == MOVED_PERMANENTLY)
-		build_header();
+	_LocExist = find_location();
+	std::cout << _location.getLocationtype() << "<--" <<std::endl;
+	if(2==1)
+	{
+		std::cout << "cgi here" << std::endl;
+	}
+	else
+	{
+		if (_request.get_method().compare("GET") == 0)
+		{
+			get_method();
+		}
+		else if (_request.get_method().compare("POST") == 0)
+			post_method();
+		else if (_request.get_method().compare("DELETE") == 0)
+			delete_method();
+		if (_status == OK || _status == MOVED_PERMANENTLY)
+			build_header();
+	}
 }
 void    Response::init_response()
 {
-	// std::cout <<"==>"<< _status << std::endl;
 	if(_status == OK)
 		generate_response();
 }

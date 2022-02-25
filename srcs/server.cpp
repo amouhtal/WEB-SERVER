@@ -212,10 +212,10 @@ namespace SERVER
 							client.setReceived(checkReq(client));
 							if (client.getReceived())
 							{
-							std::cout << "|" << client.getRequest() << "|" <<std::endl;
+							// std::cout << "|" << client.getRequest() << "|" <<std::endl;
 								// puts("Im here");
 								// exit(1);
-								Request r(client.getRequest(), 30000000, 1);
+								Request r(client.getRequest(), 30000000);
 								r.parseRequest();
 								_requset = r;
 							}

@@ -85,14 +85,13 @@ private:
     int status_code;
     int maxbody_size;
     bool request_error;
-    int is_valid;
     std::string set_top_header(std::string &line);
     int count_words(std::string str);
     void check_header_values(std::string str);
     Body get_bodys(std::string body);
 public:
     Request();
-    Request(const std::string buffer, int maxbody_size, int is_valid);
+    Request(const std::string buffer, int maxbody_size);
     Request(const Request &src);
     Request &operator=(const Request &rhs);
     // ~Request();

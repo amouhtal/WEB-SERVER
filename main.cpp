@@ -27,7 +27,7 @@ int main(int ac, char **av)
         ParssFile parss(ac, av);
         signal(SIGPIPE, SIG_IGN);
 
-        for (std::vector<dataserver>::iterator CurrrentServer = parss.server.begin(); CurrrentServer != parss.server.end(); CurrrentServer++)
+        for (std::vector<dataserver>::iterator CurrrentServer = parss.servers.begin(); CurrrentServer != parss.servers.end(); CurrrentServer++)
         {
             SERVER::ASERVER runServer;
             runServer.launch(*CurrrentServer);
