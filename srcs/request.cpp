@@ -30,11 +30,11 @@ int	Request::count_words(std::string str)
 	}
 	return count;
 }
+
 Request::Request(const std::string buffer, int maxbody_size)
 {
 	request_string = buffer;
 	this->maxbody_size = maxbody_size;
-
 	body ="21";
 	method ="";
 	url= "";
@@ -289,6 +289,7 @@ Body Request::get_bodys(std::string body)
 	// std::cout << tmp_body.content << std::endl;
 	// std::cout << tmp_body.Content_Disposition << std::endl;
 	// std::cout << tmp_body.Content_Type << std::endl;
+
 	// std::cout << "||" << tmp_body.content.find("\r\n") << std::endl;
 	tmp_body.content = tmp_body.content.substr(2);
 
@@ -375,7 +376,6 @@ void	Request::parseBody(std::string buffer)
 	// std::cout << "=========================\n";
 	// for(std::vector<Body>::iterator it= body_list.begin() ; it != body_list.end();it++)
 	// {
-	// 	std::cout <<"||||" << (*it).content<<"||"<< std::endl;
 	// 	std::cout << (*it).Content_Disposition << std::endl;
 	// 	std::cout << (*it).Content_Type << std::endl;
 	// }

@@ -7,6 +7,7 @@
 #include "location.hpp"
 #include <fstream>
 #include <sstream>
+
 #include <dirent.h>
 #define CONTINUE 100
 #define SWITCHINGPROTOCOL 101
@@ -77,12 +78,14 @@ class Response
 		std::vector<std::string> _dir_content;
 		std::string _redirected_location;
 		std::string _cgi_body;
+
     	bool        _LocExist;
 
 	public:
 	Response(dataserver &server,Request &request,int port);
 	// Response(){}
 	~Response();
+
 	bool getLocExist()
 	{
 		return _LocExist;
@@ -106,6 +109,7 @@ class Response
 	void	set_error_page(int code);
 	void	read_error_file(std::string error_path);
 	void	read_default_error_file(int status);
+
 	void 	build_error_header(int	_status);
 	bool 	find_location();
 	bool	is_directory(const std::string &path);

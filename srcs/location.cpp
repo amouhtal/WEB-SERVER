@@ -1,5 +1,6 @@
 #include "../headers/location.hpp"
 
+
 location::location(){
     this->autoindex = -1;
     this->upload_enable = -1;
@@ -45,6 +46,7 @@ int location::getL_AutoIndex()
     return this->autoindex;
 }
 
+
 void location::setLocationtype(std::string l_type)
 {
     this->Locationtype = l_type;
@@ -53,6 +55,7 @@ std::string location::getLocationtype()
 {
     return this->Locationtype;
 }
+
 
 void location::setLocationExtention(std::string l_exten)
 {
@@ -99,11 +102,11 @@ void location::setL_Allowed_Methods(std::map<std::string, int> all_methode)
     this->allowed_methode = all_methode;
 }
 
-
 std::map<std::string, int> location::getL_Allowed_Methods()
 {
     return this->allowed_methode;
 }
+
 
 void        location::setL_Return(int nbr, std::string str)
 {

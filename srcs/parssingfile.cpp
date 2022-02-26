@@ -15,11 +15,13 @@ std::string ParssFile::getFileName()
 }
 void    ParssFile::add_server(dataserver &var)
 {
+
     this->servers.push_back(var);
 }
 
 void    ParssFile::check_argument(int ac, char **argv)
 {
+
 
     if (argv[1])
         this->file_name = argv[1];
@@ -130,6 +132,7 @@ void    ParssFile::check_bracket_brace_file()
 
 void    ParssFile::take_port(std::string &ptr, dataserver& dataSr)
 {
+
     ft_strtrim(ptr);
     if (ptr.empty())
         throw std::runtime_error("Error: Cheke Your Port");
@@ -149,6 +152,7 @@ void    ParssFile::take_host(std::string & strhost, dataserver& dataHost)
     ft_strtrim(strhost);
     if (strhost.empty())
         throw std::runtime_error("Error: Cheke Your Host");
+
     strhost.erase(0, lenght);
     ft_strtrim(strhost);
     if (strhost.empty())
@@ -203,6 +207,7 @@ int lenght_int(int nbr)
 void    ParssFile::take_Error_Page(std::string &str, dataserver& dataEPage)
 {
     int nub_error = 0;
+
     std::string tmp;
     ft_strtrim(str);
     if (str.empty())
@@ -216,6 +221,7 @@ void    ParssFile::take_Error_Page(std::string &str, dataserver& dataEPage)
     ft_strtrim(str);
     if (str.empty())
         throw std::runtime_error("Error: Cheke Your Error Page");
+
     tmp = str;
     int i = std::count(tmp.begin(), tmp.end(), '.');
     if (tmp.find('.') == std::string::npos || i > 1)
@@ -239,6 +245,7 @@ void    ParssFile::take_Root(std::string &str, dataserver& dataRoot)
 }
 
 /********************************  LOCATION  ********************************/
+
 
 void    ParssFile::take_L_Root(std::string &str, location& loc)
 {
@@ -408,7 +415,6 @@ void    ParssFile::take_L_Return(std::string &str, location &loc)
     loc.setL_Return(nbr, str);
 }
 
-
 void    ParssFile::init_pointer(bool location)
 {
     if (!location)
@@ -437,6 +443,7 @@ void    ParssFile::init_pointer(bool location)
 location    ParssFile::getlocationInfo(int &start, int &end)
 {
     location sv_loc = location();
+
     std::string arr[8] = {AUTOINDEX, INDEX, FASTCGI_PASS, ALLOW_METHODS, UPLOAD_ENABLE, UPLOAD_STORE, RETURN, ROOT};
     init_pointer(true);
     std::string tmp_type = this->content_file[start];
@@ -464,6 +471,7 @@ location    ParssFile::getlocationInfo(int &start, int &end)
     }
     return sv_loc;
 }
+
 
 std::string    ParssFile::getTypeExtention(std::string tmp)
 {

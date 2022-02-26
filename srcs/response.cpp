@@ -116,7 +116,7 @@ void	Response::read_file(std::string file_path)
 	// exit(1);
 	if (access(file_path.c_str(), F_OK) != 0)
 	{
-		set_error_page(NOT_FOUND);
+    set_error_page(NOT_FOUND);
 	}
 	else
 	{
@@ -136,7 +136,6 @@ void	Response::read_file(std::string file_path)
 		else
 			set_error_page(FORBIDEN);
 	}
-
 }
 std::string	Response::getHtmlCode()
 {
@@ -209,6 +208,7 @@ void	Response::build_header()
 	}
 	this->_headers.append("\r\n\r\n");
 	this->_headers.append(_body);
+
 	
 }
 std::string Response::autoindex_run(std::string rooted_path)
@@ -308,7 +308,6 @@ void	Response::post_method()
 			// else
 			// {
 				// fileDir = getUploadDir().append(dispoFilename);
-
 				file_dir = "/Users/mel-hamr/Desktop/web-server/" + find_file_name(_request.getBodys()[i].Content_Disposition);
 				if (access(file_dir.c_str(), F_OK) == 0 && access(file_dir.c_str(), W_OK) != 0)
 				{
@@ -414,7 +413,6 @@ void    Response::init_response()
 	std::cout  << "================REQUEST================" <<std::endl;
 	std::cout << _headers << std::endl;
 	std::cout  << "=======================================" <<std::endl;
-
 }
 std::string Response::getHeader()
 {

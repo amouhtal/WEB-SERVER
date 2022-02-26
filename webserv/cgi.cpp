@@ -24,18 +24,21 @@ void LaunchCGI()
     {
         perror("[CGI ERROR] PIPE");
     }
-    if (child)
+
+    if (pid == child)
+
     {
         // setup envirenment
         close(pipefd[0]);
         dup2(pipefd[1], stdout);
         close(pipefd[1]);
-        execlp("cat","cat","a",NULL);
-        perror("demo");       /* still around?  exec failed           */
+        execlp("cat", "cat", "a",NULL);
+        // perror("demo");       /* still around?  exec failed           */
         exit(1);
     }
     else
     {
+		waitpid(-1, NULL, 0);
 
     }
 }

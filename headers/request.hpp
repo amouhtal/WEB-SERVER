@@ -85,12 +85,14 @@ private:
     int status_code;
     int maxbody_size;
     bool request_error;
+
     std::string set_top_header(std::string &line);
     int count_words(std::string str);
     void check_header_values(std::string str);
     Body get_bodys(std::string body);
 public:
     Request();
+
     Request(const std::string buffer, int maxbody_size);
     Request(const Request &src);
     Request &operator=(const Request &rhs);
@@ -105,6 +107,7 @@ public:
     std::string get_protocol();
 	std::string	get_header_value(std::string to_find);
     std::vector<Body> getBodys();
+
     void    setUrl(std::string url);
 
 };

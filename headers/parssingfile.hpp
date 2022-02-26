@@ -26,6 +26,7 @@
 #define INDEX "index"
 #define ALLOW_METHODS "allow_methods"
 #define FASTCGI_PASS "fastcgi_pass"
+
 #define UPLOAD_ENABLE "upload_enable"
 #define UPLOAD_STORE "upload_store"
 #define RETURN "return"
@@ -40,6 +41,7 @@ class location;
 
 class ParssFile
 {
+
     private:
         std::string extention;
         std::string file_name;

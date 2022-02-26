@@ -130,6 +130,7 @@ void    dataserver::printServerData()
         std::cout << "\e[1;34mkey = \e[1;32m|" << it->first << "| \e[1;34mvalue = \e[1;32m|"+ it->second << "|" << std::endl;
 
     std::cout << "\e[1;33m///////////////////////LOACATION INFORMATION/////////////////\e[1;34m" << std::endl;
+
     std::vector<std::string> arr;
     for (std::map<std::string, location>::iterator it = Location.begin(); it != Location.end(); it++)
         arr.push_back(it->first);
@@ -141,6 +142,7 @@ void    dataserver::printServerData()
         std::cout << Location[arr[i]].getL_AutoIndex() << "|" << std::endl;
         std::cout << "\e[1;34mIndex         = \e[1;32m|";
         std::cout << Location[arr[i]].getL_Index() << "|" << std::endl;
+
         if (Location[arr[i]].isCgi == true)
         {
             std::cout << "\e[1;34mfastCgiPass   = \e[1;32m|";
@@ -190,6 +192,7 @@ void    dataserver::printServerALLData()
         std::cout << Location[types[i]].getL_AutoIndex() << "|" << std::endl;
         std::cout << "\e[1;34mIndex         = \e[1;32m|";
         std::cout << Location[types[i]].getL_Index() << "|" << std::endl;
+
         if (Location[types[i]].isCgi == true)
         {
             std::cout << "\e[1;34mfastCgiPass   = \e[1;32m|";
@@ -208,7 +211,6 @@ void    dataserver::printServerALLData()
 
        std::cout << "\e[1;34mReturn   = \e[1;32m|";
         std::cout << Location[types[i]].getL_Return_nbr() << "|" << " " << "|" << Location[types[i]].getL_Return_value() << "|"<< std::endl;
-
 
         std::map<std::string , int> test;
         test = Location[types[i]].getL_Allowed_Methods();
