@@ -131,11 +131,11 @@ namespace SERVER
 		// _clients.push_back(Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr)));
 		_clients.push_back(newClient);
 		// _clientList.insert(std::pair<int, std::string>(accptSockFD, ""));
-		std::map<int, int>::iterator it = _accptMaster.find(accptSockFD);
-		if (it != _accptMaster.end())
-			it->second = sockFD;
-		else
-			_accptMaster.insert(std::pair<int, int>(accptSockFD, sockFD));
+		// std::map<int, int>::iterator it = _accptMaster.find(accptSockFD);
+		// if (it != _accptMaster.end())
+		// 	it->second = sockFD;
+		// else
+		// 	_accptMaster.insert(std::pair<int, int>(accptSockFD, sockFD));
 	}
 
 	void ASERVER::waitClients()
@@ -212,12 +212,17 @@ namespace SERVER
 							client.setReceived(checkReq(client));
 							if (client.getReceived())
 							{
-							std::cout << "|" << client.getRequest() << "|" <<std::endl;
+								std::cout << "|" << client.getRequest() << "|" << std::endl;
 								// puts("Im here");
 								// exit(1);
 								Request r(client.getRequest(), 30000000, 1);
 								r.parseRequest();
 								_requset = r;
+
+								Response resp(_data_server, _requset, 80);
+								resp.init_response();
+								// std::string respStr = client.getRequest();
+								client.setRequest(resp.getHeader());
 							}
 							// std::cout << "valread :" << valRead << std::endl;
 						}
@@ -267,18 +272,14 @@ namespace SERVER
 					{
 						// puts("writing step");
 						// exit(0);
-
-						Response resp(_data_server, _requset, 80);
-						resp.init_response();
 						int SendRet = 0;
-						// std::string respStr = client.getRequest();
-						std::string respStr = resp.getHeader();
+
 						// std::cout <<"===============================" <<std::endl;
 						// std::cout <<respStr <<std::endl;
 						// std::cout <<"===============================" <<std::endl;
-
+						std::string respStr = client.getRequest();
 						client.setLenReq(respStr.length());
-						int leng = client.getLenReq() > 294000 ? 294000 : client.getLenReq();
+						int leng = client.getLenReq() > 294000 ? 294000 : client.getLenReq();;
 						if (leng > 0)
 						{
 							SendRet = send(sockFD, respStr.c_str(), leng, 0);
@@ -286,11 +287,16 @@ namespace SERVER
 							client.SendRetSnd(client.GetRetSnd() + SendRet);
 							try
 							{
-								client.setRequest(client.getRequest().substr(SendRet, client.getLenReq()));
+								// if (client.getRequest().length() == SendRet)
+								// {
+								// 	client.setRequest("");
+								// }
+								// if (client.getRequest().length() > SendRet)
+								client.setRequest(client.getRequest().substr(SendRet));
 							}
 							catch (std::exception &e)
 							{
-								std::cout << e.what() << std::endl;
+								SendRet = -1;
 							}
 						}
 						// std::cout << "sockFD : " << sockFD << " SendRet : " << SendRet << " send lenght : " << client.GetRetSnd() << "req lenght " << client.getLenReq() << std::endl;
@@ -315,9 +321,9 @@ namespace SERVER
 							client.SendRetSnd(0);
 							client.setgetEndofReq(false);*/
 						}
-						else if (client.getRequest().length() == 0)
+						else if (client.getRequest().length() == SendRet)
 						{
-							// puts("yes im in lenght == 0");
+							puts("yes im in lenght == 0");
 							close(sockFD);
 							FD_CLR(sockFD, &_socket._masterRFDs);
 							FD_CLR(sockFD, &_socket._masterWFDS);

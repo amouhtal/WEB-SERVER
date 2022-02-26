@@ -116,11 +116,11 @@ namespace SERVER
 		// _clients.push_back(Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr)));
 		_clients.push_back(newClient);
 		// _clientList.insert(std::pair<int, std::string>(accptSockFD, ""));
-		std::map<int, int>::iterator it = _accptMaster.find(accptSockFD);
-		if (it != _accptMaster.end())
-			it->second = sockFD;
-		else
-			_accptMaster.insert(std::pair<int, int>(accptSockFD, sockFD));
+		// std::map<int, int>::iterator it = _accptMaster.find(accptSockFD);
+		// if (it != _accptMaster.end())
+		// 	it->second = sockFD;
+		// else
+		// 	_accptMaster.insert(std::pair<int, int>(accptSockFD, sockFD));
 	}
 
 	void ASERVER::waitClients()
@@ -158,7 +158,6 @@ namespace SERVER
 				for (size_t CurrentCli = 0; CurrentCli < _clients.size(); CurrentCli++)
 				{
 					Client &client = *_clients[CurrentCli];
-					bool bool_treat = false;
 					int sockFD = client.getSockFd();
 					if (FD_ISSET(sockFD, &_socket._readFDs) && client.getEndofReq() == false)
 					{
@@ -192,46 +191,46 @@ namespace SERVER
 							// 		  << "request string : " << client.getRequest() << std::endl;
 							client.setReceived(checkReq(client));
 						}
-						if (client.getEndofReq() == false)
-						{
-							std::string statusLine;
-							std::string bodyMessage;
-							std::map<std::string, std::string> _responseHeaders;
-							std::string respStr;
+						// if (client.getEndofReq() == false)
+						// {
+						// 	std::string statusLine;
+						// 	std::string bodyMessage;
+						// 	std::map<std::string, std::string> _responseHeaders;
+						// 	std::string respStr;
 
-							statusLine = "HTTP/1.1 200 OK";
-							std::ifstream file;
-							std::ostringstream streambuff;
-							file.open("/Users/amouhtal/Desktop/web-serv/webserv/among.mp4", std::ios::binary);
-							if (file.is_open())
-							{
-								streambuff << file.rdbuf();
-								bodyMessage = streambuff.str();
-								file.close();
-							}
-							_responseHeaders["Content-Length"] = std::to_string(bodyMessage.length());
-							// Content-Type: image
-							_responseHeaders["Content-Type"] = "video/mp4";
-							respStr += statusLine;
-							respStr += "\r\n";
-							std::map<std::string, std::string>::iterator it = _responseHeaders.begin();
-							while (it != _responseHeaders.end())
-							{
-								respStr += it->first;
-								respStr += ": ";
-								respStr += it->second;
-								respStr += "\n";
-								it++;
-							}
-							respStr += "\r\n";
-							respStr += bodyMessage;
-							respStr += "\r\n\r\n";
-							client.setReceived(checkReq(client));
-							// std::cout << respStr << std::endl;
-							client.setRequest(respStr);
-							client.setLenReq(respStr.length());
-							client.setgetEndofReq(true);
-						}
+						// 	statusLine = "HTTP/1.1 200 OK";
+						// 	std::ifstream file;
+						// 	std::ostringstream streambuff;
+						// 	file.open("/Users/amouhtal/Desktop/web-serv/webserv/among.mp4", std::ios::binary);
+						// 	if (file.is_open())
+						// 	{
+						// 		streambuff << file.rdbuf();
+						// 		bodyMessage = streambuff.str();
+						// 		file.close();
+						// 	}
+						// 	_responseHeaders["Content-Length"] = std::to_string(bodyMessage.length());
+						// 	// Content-Type: image
+						// 	_responseHeaders["Content-Type"] = "video/mp4";
+						// 	respStr += statusLine;
+						// 	respStr += "\r\n";
+						// 	std::map<std::string, std::string>::iterator it = _responseHeaders.begin();
+						// 	while (it != _responseHeaders.end())
+						// 	{
+						// 		respStr += it->first;
+						// 		respStr += ": ";
+						// 		respStr += it->second;
+						// 		respStr += "\n";
+						// 		it++;
+						// 	}
+						// 	respStr += "\r\n";
+						// 	respStr += bodyMessage;
+						// 	respStr += "\r\n\r\n";
+						// 	client.setReceived(checkReq(client));
+						// 	// std::cout << respStr << std::endl;
+						// 	client.setRequest(respStr);
+						// 	client.setLenReq(respStr.length());
+						// 	client.setgetEndofReq(true);
+						// }
 					}
 
 					if (FD_ISSET(sockFD, &_socket._writeFDs) && client.getReceived())

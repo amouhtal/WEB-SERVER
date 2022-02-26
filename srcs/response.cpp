@@ -73,7 +73,7 @@ void	Response::read_error_file(std::string error_path)
 }
 void	Response::read_default_error_file(int status)
 {
-	std::ifstream file("/Users/mel-hamr/Desktop/mel-hamrV2/default_error/default_error.html");
+	std::ifstream file("/Users/amouhtal/Desktop/web-server/default_error/default_error.html");
 	std::ostringstream ss;
 	ss << file.rdbuf();
 	_body = ss.str();
