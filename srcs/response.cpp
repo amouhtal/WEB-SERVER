@@ -113,18 +113,16 @@ bool Response::is_directory(const std::string &path)
 void	Response::read_file(std::string file_path)
 {
 	std::ostringstream streambuff;
-	std::string file_to_open = data_server.getRoot() + file_path;
-	// std::cout << "=>" <<file_to_open << std::endl;
-	if (access(file_to_open.c_str(), F_OK) != 0)
+	// exit(1);
+	if (access(file_path.c_str(), F_OK) != 0)
 	{
-
 		set_error_page(NOT_FOUND);
 	}
 	else
 	{
-		if (access(file_to_open.c_str(), R_OK) == 0)
+		if (access(file_path.c_str(), R_OK) == 0)
 		{
-			std::ifstream file(file_to_open);
+			std::ifstream file(file_path);
 			if (file)
 			{
 				std::ostringstream ss;
@@ -138,18 +136,30 @@ void	Response::read_file(std::string file_path)
 		else
 			set_error_page(FORBIDEN);
 	}
-	// if (file.good())
-	// {
-	// 	file.open(file_to_open, std::ios::binary);
-	// 	if(file.is_open())
-	// 	{
-	// 		streambuff << file.rdbuf();
-	// 		_body = streambuff.str();
-	// 		file.close();
-	// 	}
-	// }
-	// else
-	// 	set_error_body(NOT_FOUND);
+
+}
+std::string	Response::getHtmlCode()
+{
+	std::string htmlcode = "<!DOCTYPE html>\n\
+	<html>\n\
+		<head>\n\
+		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
+		<title>WEBSERV</title>\n\
+		<style>\n\
+			.container{margin:0;top:0;}\n\
+			.div{font-size: 2.5rem;text-align: center;margin-top: 10%;color:black;}\n\
+		</style>\n\
+		</head>\n\
+		<body>\n\
+			<div class=\"container\">\n\
+				<div class=\"div\">\n\
+					<h1>this is my web-server</h1>\n\
+				</div>\n\
+			</div>\n\
+		</body>\n\
+	</html>";
+
+	return htmlcode;
 }
 std::string Response::getContentType()
 {
@@ -162,6 +172,10 @@ std::string Response::getContentType()
 		return "application/json";
 	else if (extension.compare("ico") == 0)
 		return "image/x-icon";
+	else if (extension.compare("jpeg") == 0)
+		return "image/jpeg";
+	else if (extension.compare("jpg") == 0)
+		return "image/jpg";
 	else
 		return "text/plain";
 }
@@ -181,8 +195,8 @@ void	Response::build_header()
 	this->_headers.append("Date: " + tm.append(" GMT"));
 	this->_headers.append("\r\n");
 	this->_headers.append("Connection: " + _request.get_header_value("Connection"));
-	this->_headers.append("\r\n");
-	this->_headers.append("Content-Type: " + getContentType());
+	// this->_headers.append("\r\n");
+	// this->_headers.append("Content-Type: " + getContentType());
 	if (_request.get_header_value("Transfer-Encoding").size())
 	{
 		this->_headers.append("\r\n");
@@ -197,17 +211,84 @@ void	Response::build_header()
 	this->_headers.append(_body);
 	
 }
-std::string	Response::get_root(std::string)
+std::string Response::autoindex_run(std::string rooted_path)
 {
-	if(_LocExist&& _location.getL_Root().size())
+	DIR *directory = opendir(rooted_path.c_str());
+	struct dirent *en;
+	std::string fileName;
+	std::string _autoIndexPage;
+	_autoIndexPage = "<!DOCTYPE html>\n<html lang=\"en\">\n\
+	<head>\n\
+		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
+		<title>Bad Request</title>\n\
+		</head>\n\
+		<body>\n\
+			<div style=\"margin-left: 5%; margin-top:10%;\">\n\
+			<hr>\n";
+
+	if (directory)
+	{
+		while ((en = readdir(directory)) != nullptr)
+		{
+			fileName = en->d_name;
+			if (en->d_type == DT_DIR)
+				fileName.append("/");
+			_autoIndexPage.append("\t\t\t<p><a href=\"" + fileName + "\">" + fileName + "</a></p>\n");
+		}
+		closedir(directory);
+	}
+	_autoIndexPage += "\
+				<hr>\n\
+			</div>\n\
+		</body>\n\
+	</html>\n";
+	return _autoIndexPage;
+}
+std::string	Response::get_root()
+{
+	if(_LocExist&& _location.isRoot)
 		return _location.getL_Root();
 	else
 		return data_server.getRoot();
 }
 void	Response::get_method()
 {
-	std::string rooted_path = get_root(_request.get_url());
-	read_file(_request.get_url());
+	std::string rooted_path = get_root()+ _request.get_url();
+	if(_LocExist)
+	{
+		if( is_directory(rooted_path) == true)
+		{
+			if(_location.getL_AutoIndex() == false)
+			{
+				if(_location.getL_Index().size())
+				{
+					_request.setUrl(_location.getL_Index());
+					if(rooted_path[rooted_path.length()-1] != '/' && _location.getL_Index()[0] != '/')
+						rooted_path =rooted_path +"/"+ _location.getL_Index();
+					else if(rooted_path[rooted_path.length()-1] == '/' &&_location.getL_Index()[0] == '/')
+					{
+						rooted_path.pop_back();
+						rooted_path =rooted_path + _location.getL_Index();
+					}
+					else
+						rooted_path =rooted_path + _location.getL_Index();
+					std::cout << rooted_path << std::endl;
+					read_file(rooted_path);
+				}
+				else
+				{
+					_body = getHtmlCode();
+					_request.setUrl(_request.get_url() + ".html");
+				}
+			}
+			else if(_location.getL_AutoIndex() == true)
+				_body = autoindex_run(rooted_path);
+		}
+		else
+			read_file(rooted_path);
+	}
+	else
+		read_file(rooted_path);
 }
 std::string	Response::find_file_name(std::string dispo)
 {
@@ -266,7 +347,8 @@ bool Response::find_location()
     while (pos != 0) {
         pos = uri.rfind("/", pos - 1);
         for (; it != data_server.Location.end(); it++) {
-            if (!strncmp(uri.c_str(), it->first.c_str(), pos))
+            // if (strncmp(uri.c_str(), it->first.c_str(), pos) == 0)
+            if (it->first.compare(uri.substr(0,pos)) == 0)
             {
 				_location = it->second;
 				return true;
@@ -305,7 +387,6 @@ void	Response::delete_method()
 void	Response::generate_response()
 {
 	_LocExist = find_location();
-	std::cout << _location.getLocationtype() << "<--" <<std::endl;
 	if(2==1)
 	{
 		std::cout << "cgi here" << std::endl;
@@ -321,13 +402,19 @@ void	Response::generate_response()
 		else if (_request.get_method().compare("DELETE") == 0)
 			delete_method();
 		if (_status == OK || _status == MOVED_PERMANENTLY)
+		{
 			build_header();
+		}
 	}
 }
 void    Response::init_response()
 {
 	if(_status == OK)
 		generate_response();
+	std::cout  << "================REQUEST================" <<std::endl;
+	std::cout << _headers << std::endl;
+	std::cout  << "=======================================" <<std::endl;
+
 }
 std::string Response::getHeader()
 {

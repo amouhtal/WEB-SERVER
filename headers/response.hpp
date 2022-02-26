@@ -109,7 +109,8 @@ class Response
 	void 	build_error_header(int	_status);
 	bool 	find_location();
 	bool	is_directory(const std::string &path);
-	std::string	get_root(std::string);
-
+	std::string	get_root();
+	std::string	getHtmlCode();
+	std::string	autoindex_run(std::string rooted_path);
 };
 #endif

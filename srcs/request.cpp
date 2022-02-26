@@ -407,3 +407,13 @@ std::vector<Body> Request::getBodys()
 {
 	return this->body_list;
 }
+
+void    Request::setUrl(std::string url)
+{
+	this->url = url;
+}
+
+Request::~Request()
+{
+
+}
