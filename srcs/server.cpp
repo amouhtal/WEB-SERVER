@@ -136,6 +136,7 @@ namespace SERVER
 		// 	it->second = sockFD;
 		// else
 		// 	_accptMaster.insert(std::pair<int, int>(accptSockFD, sockFD));
+
 	}
 
 	void ASERVER::waitClients()
@@ -223,6 +224,7 @@ namespace SERVER
 								resp.init_response();
 								// std::string respStr = client.getRequest();
 								client.setRequest(resp.getHeader());
+
 							}
 							// std::cout << "valread :" << valRead << std::endl;
 						}

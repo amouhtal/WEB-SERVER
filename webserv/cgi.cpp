@@ -26,6 +26,7 @@ void LaunchCGI()
     }
 
     if (pid == child)
+
     {
         // setup envirenment
         close(pipefd[0]);
@@ -39,7 +40,6 @@ void LaunchCGI()
     {
 		waitpid(-1, NULL, 0);
 
-    
     }
 }
 
