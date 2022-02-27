@@ -64,9 +64,9 @@ void LaunchCGI()
     // dup2();
 }
 
-int main(int ac, char **av, char **env)
-{
-    env2 = env;
-    LaunchCGI();
-    return 0;
-}
+// int main(int ac, char **av, char **env)
+// {
+//     env2 = env;
+//     LaunchCGI();
+//     return 0;
+// }

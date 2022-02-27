@@ -410,9 +410,9 @@ void    Response::init_response()
 {
 	if(_status == OK)
 		generate_response();
-	std::cout  << "================REQUEST================" <<std::endl;
-	std::cout << _headers << std::endl;
-	std::cout  << "=======================================" <<std::endl;
+		// std::cout  << "================REQUEST================" <<std::endl;
+		// std::cout << _headers << std::endl;
+		// std::cout  << "=======================================" <<std::endl;
 }
 std::string Response::getHeader()
 {
