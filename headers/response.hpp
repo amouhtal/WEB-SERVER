@@ -116,5 +116,6 @@ class Response
 	std::string	get_root();
 	std::string	getHtmlCode();
 	std::string	autoindex_run(std::string rooted_path);
+	bool	is_cgi();
 };
 #endif

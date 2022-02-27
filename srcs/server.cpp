@@ -164,6 +164,7 @@ namespace SERVER
 				std::vector<int>::iterator it;
 				for (it = _masterSockFDs.begin(); it != _masterSockFDs.end(); it++)
 				{
+
 					if (FD_ISSET(*it, &_socket._readFDs))
 					{
 						this->newClient(*it);
@@ -171,13 +172,18 @@ namespace SERVER
 					}
 				}
 
-				for (size_t CurrentCli = 0; CurrentCli < _clients.size(); CurrentCli++)
+				for (int CurrentCli = 0; CurrentCli < _clients.size(); CurrentCli++)
 				{
+
 					Client &client = *_clients[CurrentCli];
+
 					bool bool_treat = false;
+					// std::cout << "===========================================1111111111============================================================ "  << CurrentCli << " "  << client.getSockFd() << std::endl;
 					int sockFD = client.getSockFd();
+					// std::cout << "===========================================222222222============================================================" << std::endl;
 					if (FD_ISSET(sockFD, &_socket._readFDs) && client.getEndofReq() == false)
 					{
+				
 						// std::cout << "Remplir reqqq getEndofReq " << client.getEndofReq() << std::endl;
 
 						char _buffRes[BUFFER_SIZE + 1];
@@ -202,9 +208,12 @@ namespace SERVER
 							_clients.erase(_clients.begin() + CurrentCli);
 							CurrentCli--;
 							if (CurrentCli < 0)
+							{
+								CurrentCli = 0;
 								break;
+							}
 						}
-						else if (valRead > 0)
+						else if (valRead > 1)
 						{
 
 							client.appendReq(_buffRes, valRead);
@@ -213,21 +222,25 @@ namespace SERVER
 							client.setReceived(checkReq(client));
 							if (client.getReceived())
 							{
-								std::cout << "|" << client.getRequest() << "|" << std::endl;
+								// std::cout << "|" << client.getRequest() << "|" << std::endl;
 								// puts("Im here");
 								// exit(1);
-								Request r(client.getRequest(), 30000000, 1);
+
+								Request r(client.getRequest(), 30000000);
 								r.parseRequest();
 								_requset = r;
 
 								Response resp(_data_server, _requset, 80);
 								resp.init_response();
+
 								// std::string respStr = client.getRequest();
 								client.setRequest(resp.getHeader());
 
 							}
 							// std::cout << "valread :" << valRead << std::endl;
 						}
+
+
 						// if (client.getEndofReq() == false)
 						// {
 						// 	std::string statusLine;
@@ -272,8 +285,8 @@ namespace SERVER
 
 					if (FD_ISSET(sockFD, &_socket._writeFDs) && client.getReceived())
 					{
-						// puts("writing step");
 						// exit(0);
+
 						int SendRet = 0;
 
 						// std::cout <<"===============================" <<std::endl;
@@ -316,7 +329,11 @@ namespace SERVER
 							CurrentCli--;
 							// client.setReceived(false);
 							if (CurrentCli < 0)
+							{
+								CurrentCli = 0;
 								break;
+
+							}
 							/*client.getRequest().clear();
 							bool_treat = true;
 							client.setLenReq(0);
@@ -338,7 +355,10 @@ namespace SERVER
 							CurrentCli--;
 							// client.setReceived(false);
 							if (CurrentCli < 0)
+							{
+								CurrentCli = 0;
 								break;
+							}
 							/*client.getRequest().clear();
 							bool_treat = true;
 							client.setLenReq(0);
@@ -353,6 +373,7 @@ namespace SERVER
 						// std::cout << "req = " << client.getRequest() << std::endl;
 						// std::cout << "req2 = " << client.getRequest() << std::endl;
 						// puts("yes im in");
+
 					}
 				}
 				// puts("here");

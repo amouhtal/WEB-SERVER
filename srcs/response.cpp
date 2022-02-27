@@ -1,12 +1,11 @@
 #include "../headers/response.hpp"
-
+#include "../headers/cgi.hpp"
 Response::Response(dataserver &server,Request &request,int port) : _request(request),data_server(server)
 {
 	_status = _request.get_status();
 	_headers = "HTTP/1.1 ";
 	_body = "";
 	_index_path = "";
-	_autoIndex = "";
 	_autoIndex_page = "";
 	_dir_path = "";
 	_autoIndex = false;
@@ -96,6 +95,20 @@ void	Response::set_error_page(int code)
 	}
 
 	build_error_header(_status);
+}
+bool	Response::is_cgi()
+{
+	for (std::map<std::string,location>::iterator i = data_server.Location.begin(); i != data_server.Location.end(); i++)
+	{
+		if ((i->first.find("php") != npos || i->first.find("py") != npos) && _request.get_url().find(i->second.getLocationExtention()) != npos) 
+		{
+			if(!i->second.isCgi)
+				return false;
+			else
+				return true;
+		}
+	}
+	return false;
 }
 bool Response::is_directory(const std::string &path)
 {
@@ -220,7 +233,7 @@ std::string Response::autoindex_run(std::string rooted_path)
 	_autoIndexPage = "<!DOCTYPE html>\n<html lang=\"en\">\n\
 	<head>\n\
 		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
-		<title>Bad Request</title>\n\
+		<title>AUTO INDEX</title>\n\
 		</head>\n\
 		<body>\n\
 			<div style=\"margin-left: 5%; margin-top:10%;\">\n\
@@ -363,35 +376,51 @@ bool Response::find_location()
 }
 void	Response::delete_method()
 {
-	// std::string directoryPath = getPath(getUriFilePath(_request.getStartLineVal("uri")));
+	std::string directoryPath =get_root() + _request.get_url();
 
-	// if (isDirectory(directoryPath))
-	// 	setErrorPage(NOT_FOUND_STATUS);
-	// else
-	// {
-	// 	if (access(directoryPath.c_str(), F_OK) != 0)
-	// 		setErrorPage(NOT_FOUND_STATUS);
-	// 	else
-	// 	{
-	// 		if (access(directoryPath.c_str(), W_OK) == 0)
-	// 		{
-	// 			if (std::remove(directoryPath.c_str()) != 0)
-	// 				setErrorPage(INTERNAL_SERVER_ERROR_STATUS);
-	// 		}
-	// 		else
-	// 			setErrorPage(FORBIDDEN_STATUS);
-	// 	}
-	// }
+	if (is_directory(directoryPath))
+		set_error_page(NOT_FOUND);
+	else
+	{
+		if (access(directoryPath.c_str(), F_OK) != 0)
+			set_error_page(NOT_FOUND);
+		else
+		{
+			if (access(directoryPath.c_str(), W_OK) == 0)
+			{
+				if (std::remove(directoryPath.c_str()) != 0)
+					set_error_page(INTERNAL_SERVER_ERROR);
+			}
+			else
+				set_error_page(FORBIDEN);
+		}
+	}
 }
 void	Response::generate_response()
 {
 	_LocExist = find_location();
-	if(2==1)
+	if(_LocExist && is_cgi())
 	{
-		std::cout << "cgi here" << std::endl;
+		std::string filePath = get_root() + _request.get_url();
+		if (access(filePath.c_str(), F_OK) == 0)
+		{
+			if (access(filePath.c_str(), R_OK) == 0 && access(filePath.c_str(), W_OK) == 0)
+			{
+				_body = LaunchCGI();
+				// parseCgiResponse(_body);
+        	std::cout << "*********************************************************" << std::endl;
+
+				std::cout << _body << std::endl;
+			}
+			else
+				set_error_page(FORBIDEN);
+		}
+		else
+			set_error_page(NOT_FOUND);
 	}
 	else
 	{
+
 		if (_request.get_method().compare("GET") == 0)
 		{
 			get_method();
@@ -408,11 +437,14 @@ void	Response::generate_response()
 }
 void    Response::init_response()
 {
+	
 	if(_status == OK)
+	{
 		generate_response();
-	std::cout  << "================REQUEST================" <<std::endl;
-	std::cout << _headers << std::endl;
-	std::cout  << "=======================================" <<std::endl;
+		// std::cout  << "================REQUEST================" <<std::endl;
+		// std::cout << _headers.c_str() << std::endl;
+		// std::cout  << "=======================================" <<std::endl;
+	}
 }
 std::string Response::getHeader()
 {
@@ -420,5 +452,16 @@ std::string Response::getHeader()
 }
 Response::~Response()
 {
-
+		_status = 200;
+	_headers.clear();
+	_body.clear();
+	_index_path.clear();
+	_autoIndex_page.clear();
+	_dir_path.clear();
+	_autoIndex = false;
+	_not_found = false;
+	_is_location = false;
+	_port = 0;
+	_redirected_location.clear();
+	_cgi_body.clear();
 }

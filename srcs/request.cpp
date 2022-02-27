@@ -44,7 +44,7 @@ Request::Request(const std::string buffer, int maxbody_size)
 	body_on = 0;
 	status_code = 200;
 	request_error = 0;
-	req_header.insert(std::make_pair<std::string,std::string>("Connection","close"));
+	req_header.insert(std::make_pair<std::string,std::string>("Connection:","close"));
 
 }
 
@@ -156,7 +156,6 @@ void    Request::parseRequest()
 	std::string value;
 	std::string buffer =request_string;
 	std::pair<std::string,std::string> pair;
-	// std::cout <<buffer;
 	try
 	{
 		buffer = set_top_header(buffer);
@@ -186,7 +185,6 @@ void    Request::parseRequest()
 		}
 		if(req_header.find("Host")->second[0] == ':')
 			throw std::runtime_error("Exception: Syntax error at Host line ");
-		// std::cout << "boundary :" << req_header.find("Content-type:")->second <<"|"<< std::endl;
 		std::multimap<std::string,std::string>::iterator it;
 		if((it = req_header.find("Content-Length:") )!= req_header.end())
 		{
@@ -208,14 +206,6 @@ void    Request::parseRequest()
 				std::cerr << e.what() << '\n';
 			}
 		}
-		// std::cout <<"|"<<buffer<<"|"<<std::endl;
-		// std::cout << "=======================\n";
-		// std::cout << method << std::endl; 
-		// for(std::multimap<std::string ,std::string>::iterator it = req_header.begin(); it != req_header.end() ; it++)
-		// {
-		// 	std::cout << "key : " << it->first << "\t" <<"value : " << it->second <<std::endl;
-		// }
-		// std::cout << "=======================\n"; 
 		parseBody(buffer);
 	}
 	catch (const std::exception &e)
@@ -223,7 +213,16 @@ void    Request::parseRequest()
 		std::cerr << e.what() << '\n';
 	}
 	check_req_errors();
+	// std::cout << "=================Request================" << std::endl;
+	// std::cout << "method : " << method << std::endl;
+	// std::cout << "URL : " << url << std::endl;
+	// std::cout << "protocol : " << protocol_version << std::endl;  
+	// for (std::multimap<std::string,std::string>::iterator i = req_header.begin(); i != req_header.end(); i++)
+	// 	std::cout << i->first << " " << i->second << std::endl;
+	// std::cout << body << std::endl;
+	// std::cout << "=======================================" << std::endl;
 }
+
 int Request::check_req_errors()
 {
 	if (status_code == 200)
@@ -237,10 +236,11 @@ int Request::check_req_errors()
 			}
 		}
 		if (!method.size())
+		{
 			this->status_code = 400;
+		}
 		else if (this->protocol_version.compare("HTTP/1.1") != 0 && status_code == 200)
 		{
-			// setStartLineVal("protocol", "HTTP/1.1");
 			protocol_version = "HTTP/1.1";
 			this->status_code = 400;
 		}
@@ -249,11 +249,17 @@ int Request::check_req_errors()
 		else if (this->method.compare("POST") == 0 && this->req_header.count("Content-Length:") < 1 && this->req_header.count("Transfer-Encoding:") < 1 )
 			this->status_code = 400;
 		else if (this->req_header.count("Content-Length") > 0 && !body_on && status_code != 413)
+		{
 			this->status_code = 400;
+		}
 		else if (!url.size() || (url.size() && url[0] != '/'))
+		{
 			this->status_code = 400;
+		}
 		else if (req_header.count("Host:") < 1)
+		{
 			this->status_code = 400;
+		}
 		if (this->status_code == 400)
 		{
 			req_header.insert(std::make_pair<std::string,std::string>("Connection","close"));
