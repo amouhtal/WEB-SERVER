@@ -1,7 +1,5 @@
 #include "../headers/response.hpp"
-// #include "cgi.cpp"
-std::string LaunchCGI();
-
+#include "../headers/cgi.hpp"
 Response::Response(dataserver &server,Request &request,int port) : _request(request),data_server(server)
 {
 	_status = _request.get_status();
@@ -485,6 +483,7 @@ void	Response::generate_response()
 	}
 	else
 	{
+
 		if (_request.get_method().compare("GET") == 0)
 		{
 			get_method();
@@ -499,6 +498,7 @@ void	Response::generate_response()
 		}
 	}
 }
+
 void    Response::init_response()
 {
 

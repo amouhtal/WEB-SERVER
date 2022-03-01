@@ -116,16 +116,16 @@ namespace SERVER
 
 		std::ofstream outfile;
 
-		outfile.open("server.log", std::ios_base::app);
-		time_t now = time(0);
-		tm *localtm = localtime(&now);
+		// outfile.open("server.log", std::ios_base::app);
+		// time_t now = time(0);
+		// tm *localtm = localtime(&now);
 
-		outfile << "client socket : " << accptSockFD << " "
-				<< "ip : " << inet_ntoa(_Adrress.sin_addr) << " "
-				<< "Port : " << std::to_string(ntohs(_Adrress.sin_port)) << " "
-				<< "Date : " << asctime(localtm);
+		// outfile << "client socket : " << accptSockFD << " "
+		// 		<< "ip : " << inet_ntoa(_Adrress.sin_addr) << " "
+		// 		<< "Port : " << std::to_string(ntohs(_Adrress.sin_port)) << " "
+		// 		<< "Date : " << asctime(localtm);
 
-		outfile.close();
+		// outfile.close();
 		Client *newClient = new Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr));
 
 		// _clients.push_back(Client(accptSockFD, "", inet_ntoa(_Adrress.sin_addr)));
@@ -145,7 +145,7 @@ namespace SERVER
 		std::cout << "\n"
 				  << "+++++++ Waiting for new connection +++++++"
 				  << "\n";
-
+		FD_ZERO(&_socket._writeFDs);
 		while (running)
 		{
 			// _readFDs = _socket._masterRFDs;
@@ -197,6 +197,7 @@ namespace SERVER
 
 						if (valRead < 1)
 						{
+							fd_set uu;
 							std::cout << "Disconnected socket: " << std::to_string(sockFD) << std::endl;
 							close(sockFD);
 							FD_CLR(sockFD, &_socket._masterRFDs);
@@ -365,21 +366,13 @@ namespace SERVER
 							client.SendRetSnd(0);
 							client.setgetEndofReq(false);*/
 						}
-						else
-						{
-							// client.setRequest(client.getRequest().c_str() +  SendRet);
-							// std::cout << "sendRet " << SendRet << " req lenght : " << (client.getRequest()).length()  << std::endl;
-						}
 						// std::cout << "req = " << client.getRequest() << std::endl;
 						// std::cout << "req2 = " << client.getRequest() << std::endl;
 						// puts("yes im in");
 
 					}
 				}
-				// puts("here");
 			}
-
-			// usleep(2000);
 		}
 	}
 	Request ASERVER::getRequest()

@@ -78,6 +78,7 @@ class ParssFile
         void    init_pointer(bool location);
         void    ft_strtrim(std::string &str);
         void    add_server(dataserver &var);
+        std::vector<int>    _getAllPorts();
         /**********************************************/
         std::string    getTypeExtention(std::string );
         void    take_L_autoindex(std::string &, location &);

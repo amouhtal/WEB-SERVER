@@ -24,6 +24,8 @@ namespace SERVER
 			_lenReq = 0;
 			_SendRetSnd = 0;
 			_RecRetSnd = 0;
+			_received = false;
+
 
 		}
 
