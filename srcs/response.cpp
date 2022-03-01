@@ -406,11 +406,11 @@ void	Response::generate_response()
 		{
 			if (access(filePath.c_str(), R_OK) == 0 && access(filePath.c_str(), W_OK) == 0)
 			{
-				_body = LaunchCGI();
+        	std::cout << "************************ " << filePath.c_str() << " *********************************" << std::endl;
+				_body = LaunchCGI(_location, filePath);
 				// parseCgiResponse(_body);
-        	std::cout << "*********************************************************" << std::endl;
 
-				std::cout << _body << std::endl;
+				// std::cout << "body " << _body << std::endl;
 			}
 			else
 				set_error_page(FORBIDEN);
@@ -435,6 +435,7 @@ void	Response::generate_response()
 		}
 	}
 }
+
 void    Response::init_response()
 {
 	

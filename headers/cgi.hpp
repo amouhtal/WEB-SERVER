@@ -8,10 +8,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "location.hpp"
 
 #define CHILD 0
 #define CGI_BUFFER 1024
 
-std::string LaunchCGI();
+std::string LaunchCGI(location _location, std::string FilePath);
 
 #endif

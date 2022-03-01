@@ -1,5 +1,18 @@
 #include "../headers/parssingfile.hpp"
 
+std::vector<int>   ParssFile::_getAllPorts()
+{
+    std::vector<int> _ports;
+    for (size_t i = 0; i < this->servers.size(); i++)
+    {
+        std::vector<int> _allPorts = this->servers[i].getListens();
+        for (size_t j = 0; j < _allPorts.size(); j++)
+            _ports.push_back(_allPorts[j]);
+        _allPorts.clear();
+    }
+    return _ports;
+}
+
 ParssFile::ParssFile(int ac, char **av)
 {
     this->check_argument(ac, av);
@@ -13,15 +26,14 @@ std::string ParssFile::getFileName()
 {
     return this->file_name;
 }
-void    ParssFile::add_server(dataserver &var)
+void ParssFile::add_server(dataserver &var)
 {
 
     this->servers.push_back(var);
 }
 
-void    ParssFile::check_argument(int ac, char **argv)
+void ParssFile::check_argument(int ac, char **argv)
 {
-
 
     if (argv[1])
         this->file_name = argv[1];
@@ -36,7 +48,7 @@ void    ParssFile::check_argument(int ac, char **argv)
         throw std::runtime_error("Cheke Your Config Extention");
 }
 
-void    ParssFile::remove_spaces(std::string &refline)
+void ParssFile::remove_spaces(std::string &refline)
 {
     while (isspace(refline.front()))
         refline.erase(0, 1);
@@ -44,11 +56,11 @@ void    ParssFile::remove_spaces(std::string &refline)
         refline.erase(refline.length() - 1, 1);
 }
 
-void    ParssFile::find_OpenClose_EachServer()
+void ParssFile::find_OpenClose_EachServer()
 {
     int i = -1;
     if (content_file.size() == 0)
-            throw std::runtime_error("Error: Check your config.conf");
+        throw std::runtime_error("Error: Check your config.conf");
     if (content_file[0] != "server" || content_file[1] != OPEN_BRACKET)
         throw std::runtime_error("Error: Check your config.conf");
     while (++i < content_file.size())
@@ -60,7 +72,7 @@ void    ParssFile::find_OpenClose_EachServer()
     }
 }
 
-void    ParssFile::delete_cmments(std::string &line, char c)
+void ParssFile::delete_cmments(std::string &line, char c)
 {
     int i = 0;
 
@@ -69,18 +81,17 @@ void    ParssFile::delete_cmments(std::string &line, char c)
         if (line[i] == c)
         {
             line.erase(i, line.length());
-            break ;
+            break;
         }
         i++;
     }
 }
 
-
-void    ParssFile::fill_file_content()
+void ParssFile::fill_file_content()
 {
     std::ifstream file(this->file_name.c_str());
     std::string line;
-    while(std::getline(file, line))
+    while (std::getline(file, line))
     {
         remove_spaces(line);
         if (line.empty() || line == "\n")
@@ -91,12 +102,12 @@ void    ParssFile::fill_file_content()
             delete_cmments(line, COMMENT2);
         if (line.find(COMMENT1) != std::string::npos)
             delete_cmments(line, COMMENT1);
-        if(line[0] != '\0')
-        this->content_file.push_back(line);
+        if (line[0] != '\0')
+            this->content_file.push_back(line);
     }
 }
 
-void    ParssFile::check_bracket_brace_file()
+void ParssFile::check_bracket_brace_file()
 {
     std::string ptr;
     int open_bracket = 0;
@@ -104,22 +115,22 @@ void    ParssFile::check_bracket_brace_file()
     int open_brace = 0;
     int close_brace = 0;
 
-    for(std::vector<std::string>::iterator it = content_file.begin(); it != content_file.end(); it++)
+    for (std::vector<std::string>::iterator it = content_file.begin(); it != content_file.end(); it++)
     {
         ptr = *it;
         open_bracket = open_bracket + std::count(ptr.begin(), ptr.end(), '[');
     }
-    for(std::vector<std::string>::iterator it = content_file.begin(); it != content_file.end(); it++)
+    for (std::vector<std::string>::iterator it = content_file.begin(); it != content_file.end(); it++)
     {
         ptr = *it;
         close_bracket = close_bracket + std::count(ptr.begin(), ptr.end(), ']');
     }
-    for(std::vector<std::string>::iterator it = content_file.begin(); it != content_file.end(); it++)
+    for (std::vector<std::string>::iterator it = content_file.begin(); it != content_file.end(); it++)
     {
         ptr = *it;
         open_brace = open_brace + std::count(ptr.begin(), ptr.end(), '{');
     }
-    for(std::vector<std::string>::iterator it = content_file.begin(); it != content_file.end(); it++)
+    for (std::vector<std::string>::iterator it = content_file.begin(); it != content_file.end(); it++)
     {
         ptr = *it;
         close_brace = close_brace + std::count(ptr.begin(), ptr.end(), '}');
@@ -130,23 +141,32 @@ void    ParssFile::check_bracket_brace_file()
         throw std::runtime_error("Error: Cheke Your Brace");
 }
 
-void    ParssFile::take_port(std::string &ptr, dataserver& dataSr)
+void ParssFile::take_port(std::string &ptr, dataserver &dataSr)
 {
-
     ft_strtrim(ptr);
+    int port;
     if (ptr.empty())
         throw std::runtime_error("Error: Cheke Your Port");
     ptr.erase(0, strlen(LISTEN));
     ft_strtrim(ptr);
     if (ptr.empty())
         throw std::runtime_error("Error: Cheke Your Port");
-    for (size_t i = 0; i < ptr.size() ; i++)
+    for (size_t i = 0; i < ptr.size(); i++)
         if (ptr[i] < '0' || ptr[i] > '9')
             throw std::runtime_error("Error: Check you port");
-    dataSr.addListen(atoi(ptr.c_str()));
+    port = atoi(ptr.c_str());
+    if (dataSr.getListens().size())
+    {
+        for (size_t i = 0; i < dataSr.getListens().size(); i++)
+        {
+            if (dataSr.getListens()[i] == port)
+                throw std::runtime_error("Error: You Have A Dublicate Port Please Cheke Your Port");
+        }
+    }
+    dataSr.addListen(port);
 }
 
-void    ParssFile::take_host(std::string & strhost, dataserver& dataHost)
+void ParssFile::take_host(std::string &strhost, dataserver &dataHost)
 {
     int lenght = strlen(HOST);
     ft_strtrim(strhost);
@@ -160,7 +180,7 @@ void    ParssFile::take_host(std::string & strhost, dataserver& dataHost)
     dataHost.setHost(strhost);
 }
 
-void    ParssFile::take_server_name(std::string &str, dataserver& dataServN)
+void ParssFile::take_server_name(std::string &str, dataserver &dataServN)
 {
     ft_strtrim(str);
     if (str.empty())
@@ -172,7 +192,7 @@ void    ParssFile::take_server_name(std::string &str, dataserver& dataServN)
     dataServN.setServer_name(str);
 }
 
-void    ParssFile::take_C_M_B_S(std::string &str, dataserver&dataCMBS)
+void ParssFile::take_C_M_B_S(std::string &str, dataserver &dataCMBS)
 {
     ft_strtrim(str);
     if (str.empty())
@@ -204,7 +224,7 @@ int lenght_int(int nbr)
     return i;
 }
 
-void    ParssFile::take_Error_Page(std::string &str, dataserver& dataEPage)
+void ParssFile::take_Error_Page(std::string &str, dataserver &dataEPage)
 {
     int nub_error = 0;
 
@@ -232,7 +252,7 @@ void    ParssFile::take_Error_Page(std::string &str, dataserver& dataEPage)
     dataEPage.setError_page(nub_error, str);
 }
 
-void    ParssFile::take_Root(std::string &str, dataserver& dataRoot)
+void ParssFile::take_Root(std::string &str, dataserver &dataRoot)
 {
     ft_strtrim(str);
     if (str.empty())
@@ -246,8 +266,7 @@ void    ParssFile::take_Root(std::string &str, dataserver& dataRoot)
 
 /********************************  LOCATION  ********************************/
 
-
-void    ParssFile::take_L_Root(std::string &str, location& loc)
+void ParssFile::take_L_Root(std::string &str, location &loc)
 {
     ft_strtrim(str);
     if (str.empty())
@@ -260,7 +279,7 @@ void    ParssFile::take_L_Root(std::string &str, location& loc)
     loc.isRoot = true;
 }
 
-void    ParssFile::take_L_autoindex(std::string &str, location &loc)
+void ParssFile::take_L_autoindex(std::string &str, location &loc)
 {
     str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
     if (str.empty())
@@ -268,11 +287,11 @@ void    ParssFile::take_L_autoindex(std::string &str, location &loc)
     str.erase(0, strlen(AUTOINDEX));
     if (str.empty())
         throw std::runtime_error("Error: Cheke Autoindex In Your Location");
-    str.compare("on") == 0 ? loc.setL_AutoIndex(1): str.compare("off") == 0 ?
-        loc.setL_AutoIndex(0): throw std::runtime_error("Error: Cheke Autoindex In Your Location");  
+    str.compare("on") == 0 ? loc.setL_AutoIndex(1) : str.compare("off") == 0 ? loc.setL_AutoIndex(0)
+                                                                             : throw std::runtime_error("Error: Cheke Autoindex In Your Location");
 }
 
-void    ParssFile::take_L_index(std::string &str, location &loc)
+void ParssFile::take_L_index(std::string &str, location &loc)
 {
     std::string tmp;
     str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
@@ -291,7 +310,7 @@ void    ParssFile::take_L_index(std::string &str, location &loc)
     loc.setL_Index(str);
 }
 
-void    ParssFile::take_L_fastcgi_pass(std::string &str, location &loc)
+void ParssFile::take_L_fastcgi_pass(std::string &str, location &loc)
 {
     str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
     if (str.empty())
@@ -303,7 +322,7 @@ void    ParssFile::take_L_fastcgi_pass(std::string &str, location &loc)
     loc.isCgi = true;
 }
 
-void    ParssFile::take_L_Allow_Methods(std::string &str, location &loc)
+void ParssFile::take_L_Allow_Methods(std::string &str, location &loc)
 {
     std::map<std::string, int> methodes;
     size_t i = 0;
@@ -314,7 +333,7 @@ void    ParssFile::take_L_Allow_Methods(std::string &str, location &loc)
     if (str.empty())
         throw std::runtime_error("Error: Cheke allow_methods In Your Location");
     if (str.length() == 17 || str.length() == 10 || str.length() == 12 ||
-        str.length() == 13 ||  str.length() == 6 || str.length() == 8 || str.length() == 5)
+        str.length() == 13 || str.length() == 6 || str.length() == 8 || str.length() == 5)
     {
         if (str[0] == '[' && (str[str.length() - 1]) == ']')
         {
@@ -347,8 +366,7 @@ void    ParssFile::take_L_Allow_Methods(std::string &str, location &loc)
     loc.setL_Allowed_Methods(methodes);
 }
 
-
-void    ParssFile::take_L_Up_Enb(std::string &str, location &loc)
+void ParssFile::take_L_Up_Enb(std::string &str, location &loc)
 {
     str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
     if (str.empty())
@@ -356,10 +374,11 @@ void    ParssFile::take_L_Up_Enb(std::string &str, location &loc)
     str.erase(0, strlen(UPLOAD_ENABLE));
     if (str.empty())
         throw std::runtime_error("Error: Cheke Upload_Enable In Your Location");
-    str.compare("on") == 0 ? loc.set_L_upload_enb(1) : str.compare("off") == 0 ? loc.set_L_upload_enb(0): loc.set_L_upload_enb(-1);   
+    str.compare("on") == 0 ? loc.set_L_upload_enb(1) : str.compare("off") == 0 ? loc.set_L_upload_enb(0)
+                                                                               : loc.set_L_upload_enb(-1);
 }
 
-void    ParssFile::take_L_Up_Store(std::string &str, location &loc)
+void ParssFile::take_L_Up_Store(std::string &str, location &loc)
 {
     str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
     if (str.empty())
@@ -394,7 +413,7 @@ void ParssFile::split(std::string line, char splitter)
     this->mapTmp.insert(std::pair<int, std::string>(i, line.substr(start, end - start)));
 }
 
-void    ParssFile::take_L_Return(std::string &str, location &loc)
+void ParssFile::take_L_Return(std::string &str, location &loc)
 {
     ft_strtrim(str);
     if (str.empty())
@@ -415,7 +434,7 @@ void    ParssFile::take_L_Return(std::string &str, location &loc)
     loc.setL_Return(nbr, str);
 }
 
-void    ParssFile::init_pointer(bool location)
+void ParssFile::init_pointer(bool location)
 {
     if (!location)
     {
@@ -436,11 +455,10 @@ void    ParssFile::init_pointer(bool location)
         this->location_pointer[5] = &ParssFile::take_L_Up_Store;
         this->location_pointer[6] = &ParssFile::take_L_Return;
         this->location_pointer[7] = &ParssFile::take_L_Root;
-
     }
 }
 
-location    ParssFile::getlocationInfo(int &start, int &end)
+location ParssFile::getlocationInfo(int &start, int &end)
 {
     location sv_loc = location();
 
@@ -455,11 +473,11 @@ location    ParssFile::getlocationInfo(int &start, int &end)
     bool validLine = true;
     for (int i = start + 2; i < end; i++)
     {
-        for (size_t count = 0; count < LOCATION_MAX_ELEMENT ; count++)
+        for (size_t count = 0; count < LOCATION_MAX_ELEMENT; count++)
         {
-            if(this->content_file[i].find(arr[count])!= std::string::npos)
+            if (this->content_file[i].find(arr[count]) != std::string::npos)
             {
-                (this->*location_pointer[count])(this->content_file[i],sv_loc);
+                (this->*location_pointer[count])(this->content_file[i], sv_loc);
                 validLine = true;
                 break;
             }
@@ -472,20 +490,19 @@ location    ParssFile::getlocationInfo(int &start, int &end)
     return sv_loc;
 }
 
-
-std::string    ParssFile::getTypeExtention(std::string tmp)
+std::string ParssFile::getTypeExtention(std::string tmp)
 {
     location sv_loc;
     int size = tmp.find('.');
-    if(size != std::string::npos)
+    if (size != std::string::npos)
     {
         tmp.erase(0, ++size);
-        return(tmp);
+        return (tmp);
     }
     return "";
 }
 
-void    ParssFile::run_location(int &start, int end, dataserver &sv)
+void ParssFile::run_location(int &start, int end, dataserver &sv)
 {
     std::string tmp_type = this->content_file[start];
     tmp_type.erase(0, strlen(LOCATION));
@@ -501,14 +518,14 @@ std::vector<dataserver> ParssFile::getServer()
     return this->servers;
 }
 
-void    ParssFile::get_elements()
+void ParssFile::get_elements()
 {
     int start, end;
     bool isNotLocation = false;
     std::string arr[6] = {LISTEN, HOST, SERVER_NAME, CLIENT_MAX_BODY_SIZE, ERROR_PAGE, ROOT};
     init_pointer(false);
     dataserver sv;
-    for (size_t i = 0;i < index_server.size();)
+    for (size_t i = 0; i < index_server.size();)
     {
         start = index_server[i] + 1;
         end = index_server[i + 1];
@@ -527,7 +544,7 @@ void    ParssFile::get_elements()
             if (!isNotLocation)
             {
                 isNotLocation = true;
-                if (this->content_file[start].find(LOCATION) != std::string::npos )
+                if (this->content_file[start].find(LOCATION) != std::string::npos)
                 {
                     if (this->content_file[start + 1] != OPEN_BRACE)
                         throw std::runtime_error("Error: Check your Location Braces ->line [" + this->content_file[start] + "]");
@@ -548,11 +565,11 @@ void    ParssFile::get_elements()
         }
         this->add_server(sv);
         sv.clear_all();
-        i+=2;
+        i += 2;
     }
 }
 
-std::vector<dataserver>  ParssFile::SplitServers()
+std::vector<dataserver> ParssFile::SplitServers()
 {
     std::vector<dataserver> server;
 
