@@ -17,6 +17,8 @@ std::string LaunchCGI(location _location, std::string FilePath)
 
     // int pipefd2[2];
 
+    // int pipefd2[2];
+
     char buffer[CGI_BUFFER];
     std::string resContent;
     int ret;

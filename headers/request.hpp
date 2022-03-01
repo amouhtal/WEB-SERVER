@@ -107,7 +107,7 @@ public:
     std::string get_protocol();
 	std::string	get_header_value(std::string to_find);
     std::vector<Body> getBodys();
-
+    std::multimap<std::string,std::string> get_header();
     void    setUrl(std::string url);
 
 };

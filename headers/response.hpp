@@ -117,5 +117,7 @@ class Response
 	std::string	getHtmlCode();
 	std::string	autoindex_run(std::string rooted_path);
 	bool	is_cgi();
+	std::string get_upload_path();
+	void parse_cgi_header(std::string &cgiResp);
 };
 #endif
