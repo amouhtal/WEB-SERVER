@@ -1,5 +1,7 @@
 #include "../headers/response.hpp"
-#include "cgi.cpp"
+// #include "cgi.cpp"
+std::string LaunchCGI();
+
 Response::Response(dataserver &server,Request &request,int port) : _request(request),data_server(server)
 {
 	_status = _request.get_status();
@@ -206,13 +208,13 @@ void	Response::build_header()
 	this->_headers.append("Server: webServ\r\n");
 	this->_headers.append("Date: " + tm.append(" GMT"));
 	this->_headers.append("\r\n");
-	this->_headers.append("Connection: " + _request.get_header_value("Connection"));
+	this->_headers.append("Connection: " + _request.get_header_value("Connection:"));
 	// this->_headers.append("\r\n");
 	// this->_headers.append("Content-Type: " + getContentType());
-	if (_request.get_header_value("Transfer-Encoding").size())
+	if (_request.get_header_value("Transfer-Encoding:").size())
 	{
 		this->_headers.append("\r\n");
-		this->_headers.append("Transfer-Encoding: " + _request.get_header_value("Transfer-Encoding"));
+		this->_headers.append("Transfer-Encoding: " + _request.get_header_value("Transfer-Encoding:"));
 	}
 	else
 	{
@@ -309,25 +311,43 @@ std::string	Response::find_file_name(std::string dispo)
 	tmp = tmp.substr(0,tmp.find("\""));
 	return tmp;
 }
+std::string Response::get_upload_path()
+{
+	
+	if(_location.get_L_upload_store().size())
+	{
+		std::string upload;
+		if(_location.get_L_upload_store()[0] != '/')
+			upload = '/' + _location.get_L_upload_store().substr(1);
+		else
+			upload = _location.get_L_upload_store().substr(1);
+		return get_root() + upload;
+	}
+	return get_root();
+}
+
 void	Response::post_method()
 {
-	std::string file_dir;
+	std::string file_path;
 	std::string buffer;
 	for (size_t i = 0; i < _request.getBodys().size(); i++)
-		{
-			// dispoFilename = getDispContentFilename(_request.getBody()[i].contentDesp);
-			// if (!isDirectory(getUploadDir()))
-			// 	setErrorPage(NOT_FOUND_STATUS);
-			// else
-			// {
-				// fileDir = getUploadDir().append(dispoFilename);
-				file_dir = "/Users/mel-hamr/Desktop/web-server/" + find_file_name(_request.getBodys()[i].Content_Disposition);
-				if (access(file_dir.c_str(), F_OK) == 0 && access(file_dir.c_str(), W_OK) != 0)
+	{
+		if(!_location.get_L_upload_enb())
+			set_error_page(UNAUTHORIZED);
+		else
+		file_path = get_upload_path();
+			std::cout<< "->" << _location.get_L_upload_store() << "<-"<<std::endl;
+			if (is_directory(file_path) == false)
+				set_error_page(NOT_FOUND);
+			else
+			{
+				std::string dispo= file_path + '/' + find_file_name(_request.getBodys()[i].Content_Disposition);
+				if (access(dispo.c_str(), F_OK) == 0 && access(dispo.c_str(), W_OK) != 0)
 				{
 					set_error_page(FORBIDEN);
 					return;
 				}
-				std::ofstream file(file_dir);
+				std::ofstream file(dispo);
 				std::stringstream ss(_request.getBodys()[i].content);
 				while (std::getline(ss, buffer))
 				{
@@ -335,8 +355,8 @@ void	Response::post_method()
 				}
 				file.close();
 				_body = "<html><head><body><div><h5>File Uploaded successfully</h5></div></body></head></html>";
-			// }
-		}
+			}
+	}
 }
 bool Response::find_location()
 {

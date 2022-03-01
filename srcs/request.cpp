@@ -206,6 +206,11 @@ void    Request::parseRequest()
 				std::cerr << e.what() << '\n';
 			}
 		}
+		if((it = req_header.find("Connection:") ) == req_header.end())
+		{
+			req_header.insert(std::make_pair<std::string,std::string>("Connection","close"));
+
+		}
 		parseBody(buffer);
 	}
 	catch (const std::exception &e)
