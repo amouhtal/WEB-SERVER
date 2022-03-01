@@ -51,13 +51,58 @@ void Response::build_error_header(int status)
 	this->_headers.append("Server: webServ\r\n");
 	this->_headers.append("Date: " + tm.append(" GMT"));
 	this->_headers.append("\r\n");
-	this->_headers.append("Connection: " + _request.get_header_value("Connection"));
+	this->_headers.append("Connection: " + _request.get_header_value("Connection:"));
 	this->_headers.append("\r\n");
 	this->_headers.append("Content-Type: text/html; charset=UTF-8");
 	this->_headers.append("\r\n");
 	this->_headers.append("Content-Length: " + std::to_string(_body.length()));
 	this->_headers.append("\r\n\r\n");
 	this->_headers.append(_body);
+}
+void Response::parse_cgi_header(std::string &cgiResp)
+{
+	std::string buffer;
+	std::istringstream s(cgiResp);
+	time_t rawTime;
+	std::string tm;
+
+	time(&rawTime);
+	tm = ctime(&rawTime);
+	tm.pop_back();
+	this->_headers.append("HTTP/1.1");
+	this->_headers.append(" ");
+	this->_headers.append(std::to_string(_status));
+	this->_headers.append(" ");
+	this->_headers.append(this->_errors[_status]);
+	this->_headers.append("\r\n");
+	this->_headers.append("Server: webServ\r\n");
+	this->_headers.append("Date: " + tm.append(" GMT"));
+	this->_headers.append("\r\n");
+	this->_headers.append("Connection: " + _request.get_header_value("Connection:"));
+	this->_headers.append("\r\n");
+
+			while (std::getline(s, buffer))
+			{
+				if (buffer.find("X-Powered-By:") != npos)
+					this->_headers.append("X-Powered-By: " + buffer.substr(buffer.find(": ") + 2));
+				else if (buffer.find("Set-Cookie:") != npos)
+					this->_headers.append("Set-Cookie: " + buffer.substr(buffer.find(": ") + 2));
+				else if (buffer.find("Expires:") != npos)
+					this->_headers.append("Expires: " + buffer.substr(buffer.find(": ") + 2));
+				else if (buffer.find("Cache-Control:") != npos)
+					this->_headers.append("Cache-Control: " + buffer.substr(buffer.find(": ") + 2));
+				else if (buffer.find("Pragma:") != npos)
+					this->_headers.append("Pragma: " + buffer.substr(buffer.find(": ") + 2));
+				else if (buffer.find("Content-type:") != npos)
+					this->_headers.append("Content-type: " + buffer.substr(buffer.find(": ") + 2));
+				else if (buffer.compare("\r\n\r\n") == 0)
+					break;
+			}
+			this->_body = cgiResp.substr(cgiResp.find("\r\n\r\n") + 4);
+		this->_headers.append("\r\n");
+		this->_headers.append("Content-Length: " + std::to_string(_body.size()));
+		this->_headers.append("\r\n\r\n");
+		this->_headers.append(_body);
 }
 void	Response::read_error_file(std::string error_path)
 {
@@ -131,7 +176,7 @@ void	Response::read_file(std::string file_path)
 	// exit(1);
 	if (access(file_path.c_str(), F_OK) != 0)
 	{
-    set_error_page(NOT_FOUND);
+		set_error_page(NOT_FOUND);
 	}
 	else
 	{
@@ -155,23 +200,23 @@ void	Response::read_file(std::string file_path)
 std::string	Response::getHtmlCode()
 {
 	std::string htmlcode = "<!DOCTYPE html>\n\
-	<html>\n\
-		<head>\n\
-		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
-		<title>WEBSERV</title>\n\
-		<style>\n\
-			.container{margin:0;top:0;}\n\
-			.div{font-size: 2.5rem;text-align: center;margin-top: 10%;color:black;}\n\
-		</style>\n\
-		</head>\n\
-		<body>\n\
-			<div class=\"container\">\n\
-				<div class=\"div\">\n\
-					<h1>this is my web-server</h1>\n\
-				</div>\n\
-			</div>\n\
-		</body>\n\
-	</html>";
+							<html>\n\
+							<head>\n\
+							<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
+							<title>WEBSERV</title>\n\
+							<style>\n\
+							.container{margin:0;top:0;}\n\
+							.div{font-size: 2.5rem;text-align: center;margin-top: 10%;color:black;}\n\
+							</style>\n\
+							</head>\n\
+							<body>\n\
+							<div class=\"container\">\n\
+							<div class=\"div\">\n\
+							<h1>this is my web-server</h1>\n\
+							</div>\n\
+							</div>\n\
+							</body>\n\
+							</html>";
 
 	return htmlcode;
 }
@@ -211,7 +256,7 @@ void	Response::build_header()
 	this->_headers.append("Connection: " + _request.get_header_value("Connection:"));
 	// this->_headers.append("\r\n");
 	// this->_headers.append("Content-Type: " + getContentType());
-	if (_request.get_header_value("Transfer-Encoding:").size())
+	if (_request.get_header().count("Transfer-Encoding:"))
 	{
 		this->_headers.append("\r\n");
 		this->_headers.append("Transfer-Encoding: " + _request.get_header_value("Transfer-Encoding:"));
@@ -224,7 +269,7 @@ void	Response::build_header()
 	this->_headers.append("\r\n\r\n");
 	this->_headers.append(_body);
 
-	
+
 }
 std::string Response::autoindex_run(std::string rooted_path)
 {
@@ -233,13 +278,13 @@ std::string Response::autoindex_run(std::string rooted_path)
 	std::string fileName;
 	std::string _autoIndexPage;
 	_autoIndexPage = "<!DOCTYPE html>\n<html lang=\"en\">\n\
-	<head>\n\
-		<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
-		<title>AUTO INDEX</title>\n\
-		</head>\n\
-		<body>\n\
-			<div style=\"margin-left: 5%; margin-top:10%;\">\n\
-			<hr>\n";
+					  <head>\n\
+					  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\
+					  <title>AUTO INDEX</title>\n\
+					  </head>\n\
+					  <body>\n\
+					  <div style=\"margin-left: 5%; margin-top:10%;\">\n\
+					  <hr>\n";
 
 	if (directory)
 	{
@@ -253,10 +298,10 @@ std::string Response::autoindex_run(std::string rooted_path)
 		closedir(directory);
 	}
 	_autoIndexPage += "\
-				<hr>\n\
-			</div>\n\
-		</body>\n\
-	</html>\n";
+					   <hr>\n\
+					   </div>\n\
+					   </body>\n\
+					   </html>\n";
 	return _autoIndexPage;
 }
 std::string	Response::get_root()
@@ -313,14 +358,14 @@ std::string	Response::find_file_name(std::string dispo)
 }
 std::string Response::get_upload_path()
 {
-	
+
 	if(_location.get_L_upload_store().size())
 	{
 		std::string upload;
 		if(_location.get_L_upload_store()[0] != '/')
-			upload = '/' + _location.get_L_upload_store().substr(1);
+			upload = '/' + _location.get_L_upload_store();
 		else
-			upload = _location.get_L_upload_store().substr(1);
+			upload = _location.get_L_upload_store();
 		return get_root() + upload;
 	}
 	return get_root();
@@ -335,8 +380,9 @@ void	Response::post_method()
 		if(!_location.get_L_upload_enb())
 			set_error_page(UNAUTHORIZED);
 		else
-		file_path = get_upload_path();
-			std::cout<< "->" << _location.get_L_upload_store() << "<-"<<std::endl;
+		{
+			file_path = get_upload_path();
+			std::cout<< "->" << file_path << "<-"<<std::endl;
 			if (is_directory(file_path) == false)
 				set_error_page(NOT_FOUND);
 			else
@@ -356,43 +402,44 @@ void	Response::post_method()
 				file.close();
 				_body = "<html><head><body><div><h5>File Uploaded successfully</h5></div></body></head></html>";
 			}
+		}
 	}
 }
 bool Response::find_location()
 {
 	std::string uri = _request.get_url();
-    if (uri[0] != '/')
-        uri = "/" + uri; 
-    std::map<std::string, location>::iterator it = data_server.Location.begin();//Location.begin();
-    // looking for exact match
-    for (; it != data_server.Location.end(); it++) {
-        if (it->first == uri) {
+	if (uri[0] != '/')
+		uri = "/" + uri; 
+	std::map<std::string, location>::iterator it = data_server.Location.begin();//Location.begin();
+	// looking for exact match
+	for (; it != data_server.Location.end(); it++) {
+		if (it->first == uri) {
 			_location = it->second;
-            return (true);
-        }
-    }
+			return (true);
+		}
+	}
 
-    // no exact match found: looking for the longest match
-    it = data_server.Location.begin();
-    size_t pos = uri.length();
+	// no exact match found: looking for the longest match
+	it = data_server.Location.begin();
+	size_t pos = uri.length();
 
-    while (pos != 0) {
-        pos = uri.rfind("/", pos - 1);
-        for (; it != data_server.Location.end(); it++) {
-            // if (strncmp(uri.c_str(), it->first.c_str(), pos) == 0)
-            if (it->first.compare(uri.substr(0,pos)) == 0)
-            {
+	while (pos != 0) {
+		pos = uri.rfind("/", pos - 1);
+		for (; it != data_server.Location.end(); it++) {
+			// if (strncmp(uri.c_str(), it->first.c_str(), pos) == 0)
+			if (it->first.compare(uri.substr(0,pos)) == 0)
+			{
 				_location = it->second;
 				return true;
 			}
 			if (it->first == "/")
-            {
+			{
 				_location = it->second;
 				return true;
 			}
-        }
-    }
-    return (false);
+		}
+	}
+	return (false);
 }
 void	Response::delete_method()
 {
@@ -427,8 +474,8 @@ void	Response::generate_response()
 			if (access(filePath.c_str(), R_OK) == 0 && access(filePath.c_str(), W_OK) == 0)
 			{
 				_body = LaunchCGI();
-				// parseCgiResponse(_body);
-				std::cout << _body << std::endl;
+				parse_cgi_header(_body);
+				// std::cout << _body << std::endl;
 			}
 			else
 				set_error_page(FORBIDEN);
@@ -454,7 +501,7 @@ void	Response::generate_response()
 }
 void    Response::init_response()
 {
-	
+
 	if(_status == OK)
 	{
 		generate_response();
@@ -462,6 +509,8 @@ void    Response::init_response()
 		std::cout << _headers.c_str() << std::endl;
 		std::cout  << "=======================================" <<std::endl;
 	}
+	else
+		set_error_page(_status);
 }
 std::string Response::getHeader()
 {
@@ -469,7 +518,7 @@ std::string Response::getHeader()
 }
 Response::~Response()
 {
-		_status = 200;
+	_status = 200;
 	_headers.clear();
 	_body.clear();
 	_index_path.clear();

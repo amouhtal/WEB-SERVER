@@ -207,10 +207,7 @@ void    Request::parseRequest()
 			}
 		}
 		if((it = req_header.find("Connection:") ) == req_header.end())
-		{
-			req_header.insert(std::make_pair<std::string,std::string>("Connection","close"));
-
-		}
+			req_header.insert(std::make_pair<std::string,std::string>("Connection:","close"));
 		parseBody(buffer);
 	}
 	catch (const std::exception &e)
@@ -422,6 +419,10 @@ std::vector<Body> Request::getBodys()
 void    Request::setUrl(std::string url)
 {
 	this->url = url;
+}
+std::multimap<std::string,std::string> Request::get_header()
+{
+	return this->req_header;
 }
 
 Request::~Request()
