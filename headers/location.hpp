@@ -32,7 +32,7 @@ class location
         void 		setL_Fastcgi_Pass(std::string);
         void        setL_Root(std::string);
         void        setL_Return(int, std::string);
-        void        setL_Allowed_Methods(std::map<std::string, int>);
+        void        setL_Allowed_Methods(std::map<std::string, int> &);
         void        set_L_type(std::string);
         void        set_L_upload_enb(int);
         void        set_L_upload_store(std::string);

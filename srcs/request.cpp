@@ -215,14 +215,14 @@ void    Request::parseRequest()
 		std::cerr << e.what() << '\n';
 	}
 	check_req_errors();
-	std::cout << "=================Request================" << std::endl;
-	std::cout << "method : " << method << std::endl;
-	std::cout << "URL : " << url << std::endl;
-	std::cout << "protocol : " << protocol_version << std::endl;  
-	for (std::multimap<std::string,std::string>::iterator i = req_header.begin(); i != req_header.end(); i++)
-		std::cout << i->first << " " << i->second << std::endl;
-	std::cout << body << std::endl;
-	std::cout << "=======================================" << std::endl;
+	// std::cout << "=================Request================" << std::endl;
+	// std::cout << "method : " << method << std::endl;
+	// std::cout << "URL : " << url << std::endl;
+	// std::cout << "protocol : " << protocol_version << std::endl;  
+	// for (std::multimap<std::string,std::string>::iterator i = req_header.begin(); i != req_header.end(); i++)
+	// 	std::cout << i->first << " " << i->second << std::endl;
+	// std::cout << body << std::endl;
+	// std::cout << "=======================================" << std::endl;
 }
 
 int Request::check_req_errors()
