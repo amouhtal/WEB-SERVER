@@ -81,6 +81,7 @@ private:
 	std::multimap<std::string,std::string> req_header;
     std::multimap<std::string,std::string> req_body	;
     std::vector<Body> body_list;
+    std::vector<std::string> cookies;
     int body_on;
     int status_code;
     int maxbody_size;

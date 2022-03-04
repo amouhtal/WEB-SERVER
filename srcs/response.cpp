@@ -1,7 +1,5 @@
 #include "../headers/response.hpp"
-// #include "cgi.cpp"
-std::string LaunchCGI();
-
+#include "../headers/cgi.hpp"
 Response::Response(dataserver &server,Request &request,int port) : _request(request),data_server(server)
 {
 	_status = _request.get_status();
@@ -120,7 +118,7 @@ void	Response::read_error_file(std::string error_path)
 }
 void	Response::read_default_error_file(int status)
 {
-	std::ifstream file("/Users/mel-hamr/Desktop/web-server/default_error/default_error.html");
+	std::ifstream file("/Users/mel-hamr/Desktop/server/default_error/default_error.html");
 	std::ostringstream ss;
 	ss << file.rdbuf();
 	_body = ss.str();
@@ -152,7 +150,10 @@ bool	Response::is_cgi()
 			if(!i->second.isCgi)
 				return false;
 			else
+			{
+				_cgi_location = i->second;
 				return true;
+			}
 		}
 	}
 	return false;
@@ -222,9 +223,9 @@ std::string	Response::getHtmlCode()
 }
 std::string Response::getContentType()
 {
-	std::string extension = _request.get_url().substr(_request.get_url().find(".") + 1);
+	std::string extension = _request.get_url().substr(_request.get_url().rfind(".") + 1);
 	if (_request.get_header_value("Content-Type:").size())
-		return _request.get_header_value("Content-Type");
+		return _request.get_header_value("Content-Type:");
 	else if (extension.compare("html") == 0 || extension.compare("php") == 0)
 		return "text/html; charset=UTF-8";
 	else if (extension.compare("json") == 0)
@@ -250,24 +251,39 @@ void	Response::build_header()
 	this->_headers.append(" ");
 	this->_headers.append(this->_errors[_status]);
 	this->_headers.append("\r\n");
-	this->_headers.append("Server: webServ\r\n");
-	this->_headers.append("Date: " + tm.append(" GMT"));
-	this->_headers.append("\r\n");
-	this->_headers.append("Connection: " + _request.get_header_value("Connection:"));
-	// this->_headers.append("\r\n");
-	// this->_headers.append("Content-Type: " + getContentType());
-	if (_request.get_header().count("Transfer-Encoding:"))
+	if(_status == MOVED_PERMANENTLY)
 	{
+		this->_headers.append("Location: " + _location.getL_Return_value());
 		this->_headers.append("\r\n");
-		this->_headers.append("Transfer-Encoding: " + _request.get_header_value("Transfer-Encoding:"));
+		this->_headers.append("\r\n\r\n");
+		puts("hereereere000");
 	}
 	else
 	{
+		this->_headers.append("Server: webServ\r\n");
+		this->_headers.append("Date: " + tm.append(" GMT"));
 		this->_headers.append("\r\n");
-		this->_headers.append("Content-Length: " + std::to_string(_body.length()));
+		this->_headers.append("Connection: " + _request.get_header_value("Connection:"));
+		this->_headers.append("\r\n");
+		this->_headers.append("Content-Type: " + getContentType());
+		if (_request.get_header().count("Transfer-Encoding:"))
+		{
+			// this->_headers.append("\r\n");
+			// this->_headers.append("Transfer-Encoding: " + _request.get_header_value("Transfer-Encoding:"));
+		}
+		else
+		{
+			this->_headers.append("\r\n");
+			this->_headers.append("Content-Length: " + std::to_string(_body.length()));
+		}
+		if (_request.get_header().count("Cookie:"))
+		{
+			this->_headers.append("\r\n");
+			this->_headers.append("Set-cookie: " + _request.get_header_value("Cookie"));
+		}
+		this->_headers.append("\r\n\r\n");
+		this->_headers.append(_body);
 	}
-	this->_headers.append("\r\n\r\n");
-	this->_headers.append(_body);
 
 
 }
@@ -332,7 +348,6 @@ void	Response::get_method()
 					}
 					else
 						rooted_path =rooted_path + _location.getL_Index();
-					std::cout << rooted_path << std::endl;
 					read_file(rooted_path);
 				}
 				else
@@ -382,7 +397,6 @@ void	Response::post_method()
 		else
 		{
 			file_path = get_upload_path();
-			std::cout<< "->" << file_path << "<-"<<std::endl;
 			if (is_directory(file_path) == false)
 				set_error_page(NOT_FOUND);
 			else
@@ -463,49 +477,106 @@ void	Response::delete_method()
 		}
 	}
 }
+void	Response::handle_cgi()
+{
+	struct stat st;
+    std::map<std::string , int> test;
+	std::string filePath = get_root() + _request.get_url();
+	test = _cgi_location.getL_Allowed_Methods();
+
+
+	if(!test[_request.get_method()])
+		set_error_page(METHOD_NOT_ALLOWED);
+	if (access(filePath.c_str(), F_OK) == 0)
+	{
+		if (access(filePath.c_str(), R_OK) == 0 && access(filePath.c_str(), W_OK) == 0)
+		{
+			if (stat(this->_cgi_location.getL_Fastcgi_Pass().c_str(), &st) == -1)
+				set_error_page(INTERNAL_SERVER_ERROR);
+			else
+			{
+				_body = LaunchCGI(_cgi_location,filePath);
+				parse_cgi_header(_body);
+			}
+		}
+		else
+			set_error_page(FORBIDEN);
+	}
+	else
+		set_error_page(NOT_FOUND);
+}
 void	Response::generate_response()
 {
 	_LocExist = find_location();
+
+	if(_LocExist && _location.getL_Return_value().size())
+	{
+		_status = MOVED_PERMANENTLY;
+		build_header();
+		return;
+	}
 	if(_LocExist && is_cgi())
 	{
-		std::string filePath = get_root() + _request.get_url();
-		if (access(filePath.c_str(), F_OK) == 0)
-		{
-			if (access(filePath.c_str(), R_OK) == 0 && access(filePath.c_str(), W_OK) == 0)
-			{
-				_body = LaunchCGI();
-				parse_cgi_header(_body);
-				// std::cout << _body << std::endl;
-			}
-			else
-				set_error_page(FORBIDEN);
-		}
-		else
-			set_error_page(NOT_FOUND);
+		handle_cgi();
 	}
 	else
 	{
+    	std::map<std::string , int> test;
+		test = _location.getL_Allowed_Methods();
+		if(!test[_request.get_method()])
+			set_error_page(METHOD_NOT_ALLOWED);
 		if (_request.get_method().compare("GET") == 0)
-		{
 			get_method();
-		}
 		else if (_request.get_method().compare("POST") == 0)
 			post_method();
 		else if (_request.get_method().compare("DELETE") == 0)
 			delete_method();
-		if (_status == OK || _status == MOVED_PERMANENTLY)
-		{
+		if (_status == OK )
 			build_header();
-		}
 	}
 }
+
+// void	Response::FindServer()
+// {
+// 	std::string host = _request.get_header_value("Host:");
+// 	std::string server_name = host.substr(0,host.find(':'));
+// 	int	port = std::stoi(host.substr(host.find(':') + 1));
+// 	size_t i = this->_data_servers.size();
+// 	for(size_t j = 0; j < i; j++)
+// 	{
+// 		if (server_name == _data_servers[j])
+// 		{
+// 			for (std::vector<int>::iterator it = _data_servers[j].getListens().begin(); it != _data_servers[j].getListens().begin(); it++)
+// 			{
+// 				if(*it == port)
+// 				{
+// 					serverIndex = j;
+// 					return ;
+// 				}
+// 			}
+			
+// 		}
+// 	}
+// 	for(size_t j = 0; j < i; j++)
+// 	{
+// 		for (std::vector<int>::iterator it = _data_servers[j].getListens().begin(); it != _data_servers[j].getListens().begin(); it++)
+// 		{
+// 			if(*it == port)
+// 			{
+// 				serverIndex = j;
+// 				return ;
+// 			}
+// 		}
+// 	}
+// 	serverIndex = 0;
+// }
 void    Response::init_response()
 {
-
+	// FindServer();
 	if(_status == OK)
 	{
 		generate_response();
-		std::cout  << "================REQUEST================" <<std::endl;
+		std::cout  << "================RESPONSE================" <<std::endl;
 		std::cout << _headers.c_str() << std::endl;
 		std::cout  << "=======================================" <<std::endl;
 	}
@@ -531,3 +602,6 @@ Response::~Response()
 	_redirected_location.clear();
 	_cgi_body.clear();
 }
+
+
+// 3lach redirection khatdkhdem ri f GET method

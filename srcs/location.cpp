@@ -97,9 +97,10 @@ std::string location::getL_Fastcgi_Pass()
     return this->fastcgi_pass;
 }
 
-void location::setL_Allowed_Methods(std::map<std::string, int> all_methode)
+void location::setL_Allowed_Methods(std::map<std::string, int> &all_methode)
 {
     this->allowed_methode = all_methode;
+
 }
 
 std::map<std::string, int> location::getL_Allowed_Methods()

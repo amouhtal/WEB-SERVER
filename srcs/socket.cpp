@@ -4,32 +4,13 @@
 namespace SERVER
 {
 
-    void ASOCKET::SetupSocket()
+    void ASOCKET::SetupSocket(int port)
     {
-        std::vector<short>::iterator beginPort;
-        std::vector<short>::iterator endPort;
 
-        // parser
-        _ports.push_back(7779);
-        _ports.push_back(7778);
-
-        beginPort = _ports.begin();
-        endPort = _ports.end();
-        FD_ZERO(&_masterRFDs);
-        FD_ZERO(&_masterWFDS);
-        FD_ZERO(&_readFDs);
-        FD_ZERO(&_writeFDs);
-
-        std::cout << "Begin setup ...  " << std::endl;
-
-        for (; beginPort != endPort; beginPort++)
-        {
-            _port = *beginPort;
-            CreatSocket();
-            BindSocket();
-            ListenSocket();
-        }
-        std::cout << "End setup " << std::endl;
+        _port = port;
+        CreatSocket();
+        BindSocket();
+        ListenSocket();
     }
 
     void ASOCKET::CreatSocket()
@@ -59,7 +40,7 @@ namespace SERVER
 
     void ASOCKET::ListenSocket()
     {
-        if (listen(_masterSockFD, BACKLOG) == -1)
+        if (listen(_masterSockFD, 0) == -1)
             perror("[ERROR] in listen !");
         FD_SET(_masterSockFD, &_masterRFDs);
 

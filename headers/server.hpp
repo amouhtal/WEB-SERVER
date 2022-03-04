@@ -21,11 +21,10 @@
 #include "time.h"
 #include <sstream>
 
-
-#include"parssingfile.hpp"
+#include "parssingfile.hpp"
 #include "request.hpp"
 #include "response.hpp"
-#define BUFFER_SIZE 99
+#define BUFFER_SIZE 1024
 #define CHUNKED 2
 #define running 1
 
@@ -38,7 +37,8 @@ namespace SERVER
 	class ASOCKET
 	{
 	public:
-		std::vector<short> _ports;
+		std::vector<int> _ports;
+		dataserver _data_server;
 		short _port;
 		std::string _host;
 		std::vector<int> _masterSockFDs;
@@ -55,7 +55,7 @@ namespace SERVER
 
 	public:
 		ASOCKET(){};
-		void SetupSocket();
+		void SetupSocket(int port);
 		void CreatSocket();
 		void BindSocket();
 		void ListenSocket();
@@ -74,7 +74,7 @@ namespace SERVER
 		fd_set _masterWFDS;
 		int _maxSockFD;
 		std::vector<int> _masterSockFDs;
-		std::vector<short> _ports;
+		std::vector<int> _ports;
 		short _port;
 		struct sockaddr_in _Adrress;
 		socklen_t _addrLen;
@@ -88,25 +88,34 @@ namespace SERVER
 		/////////////////////////
 		dataserver _data_server;
 		Request _requset;
+
 	public:
-		void launch(dataserver Dserver)
+		void launch(std::vector<dataserver> servers)
 		{
-			_socket.SetupSocket();
-			this->_masterRFDs = _socket._masterRFDs;
-			this->_masterWFDS = _socket._masterWFDS;
-			this->_maxSockFD = _socket._maxSockFD;
-			this->_masterSockFDs = _socket._masterSockFDs;
-			this->_ports = _socket._ports;
-			this->_port = _socket._port;
-			this->_Adrress = _socket._Adrress;
-			this->_addrLen = _socket._addrLen;
-			this->_data_server = Dserver;
+			FD_ZERO(&_masterRFDs);
+			FD_ZERO(&_masterWFDS);
+			FD_ZERO(&_readFDs);
+			std::cout << "Begin setup ...  " << std::endl;
+			for (std::vector<dataserver>::iterator it = servers.begin(); it != servers.end(); it++)
+			{
+				_socket.SetupSocket(it->getListen());
+				this->_data_server = *it;
+				this->_masterRFDs = _socket._masterRFDs;
+				this->_masterWFDS = _socket._masterWFDS;
+				this->_maxSockFD = _socket._maxSockFD;
+				this->_masterSockFDs = _socket._masterSockFDs;
+				this->_ports = _socket._ports;
+				this->_port = _socket._port;
+				this->_Adrress = _socket._Adrress;
+				this->_addrLen = _socket._addrLen;
+			}
+			std::cout << "End setup " << std::endl;
 			waitClients();
 		}
 		void waitClients();
 		void newClient(int &sockFD);
-		dataserver	getDataServer();
-		Request	getRequest();
+		dataserver getDataServer();
+		Request getRequest();
 		~ASERVER(void);
 	};
 }

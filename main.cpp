@@ -26,13 +26,25 @@ int main(int ac, char **av)
 
         ParssFile parss(ac, av);
         signal(SIGPIPE, SIG_IGN);
+        // int counter = 0;
+        // std::vector<int> ports = parss._getAllPorts();
+        // for (size_t i = 0; i < ports.size(); i++)
+        //     std::cout << ports[i] << std::endl;
+        std::vector<dataserver> CurrrentServer = parss.SplitServers();
+        // std::cout << CurrrentServer.size() << std::endl;
+        // std::cout <<CurrrentServer[0].getListen() << std::endl;
 
+        // for (std::vector<dataserver>::iterator CurrrentServer = parss.servers.begin(); CurrrentServer != parss.servers.end(); CurrrentServer++)
+        // {
+        //     _ports.push_back();
+        // for (std::vector<*CurrrentServer>::iterator CurrrentServer = parss.servers.begin(); CurrrentServer != parss.servers.end(); CurrrentServer++)
+        // {
 
-        for (std::vector<dataserver>::iterator CurrrentServer = parss.servers.begin(); CurrrentServer != parss.servers.end(); CurrrentServer++)
-        {
+        // }
             SERVER::ASERVER runServer;
-            runServer.launch(*CurrrentServer);
-        }
+            runServer.launch(CurrrentServer);
+
+        // }
         // printServersINFO(newServers);
     }
     catch (const std::exception &e)
