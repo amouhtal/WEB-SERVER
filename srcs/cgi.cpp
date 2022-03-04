@@ -4,11 +4,7 @@
 // #define stdout 1
 // using namespace std;
 
-<<<<<<< HEAD
-std::string LaunchCGI(location _location, std::string FilePath)
-=======
 std::string LaunchCGI(location _location, std::string FilePath, Request _req)
->>>>>>> server
 {
     pid_t pid;
     int Ifd[2];
