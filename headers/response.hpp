@@ -78,6 +78,7 @@ class Response
 		std::vector<std::string> _dir_content;
 		std::string _redirected_location;
 		std::string _cgi_body;
+		std::string	fast_cgi;
 
     	bool        _LocExist;
 

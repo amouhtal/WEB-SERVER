@@ -9,10 +9,11 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "location.hpp"
+#include "request.hpp"
 
 #define CHILD 0
 #define CGI_BUFFER 1024
 
-std::string LaunchCGI(location _location, std::string FilePath);
+std::string LaunchCGI(location _location, std::string FilePath, Request _req);
 
 #endif

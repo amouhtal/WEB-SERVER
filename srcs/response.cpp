@@ -14,6 +14,7 @@ Response::Response(dataserver &server,Request &request,int port) : _request(requ
 	_port = 0;
 	_redirected_location = "";
 	_cgi_body = "";
+	fast_cgi = "";
 	this->_errors[200] = "OK";
 	this->_errors[301] = "Moved Permanently";
 	this->_errors[307] = "Temporary Redirect";
@@ -118,7 +119,7 @@ void	Response::read_error_file(std::string error_path)
 }
 void	Response::read_default_error_file(int status)
 {
-	std::ifstream file("/Users/mel-hamr/Desktop/server/default_error/default_error.html");
+	std::ifstream file("/Users/amouhtal/Desktop/web-server/default_error/default_error.html");
 	std::ostringstream ss;
 	ss << file.rdbuf();
 	_body = ss.str();
@@ -150,7 +151,10 @@ bool	Response::is_cgi()
 			if(!i->second.isCgi)
 				return false;
 			else
+			{
+				fast_cgi = i->second.getL_Fastcgi_Pass();
 				return true;
+			}
 		}
 	}
 	return false;
@@ -485,12 +489,15 @@ void	Response::generate_response()
 		set_error_page(METHOD_NOT_ALLOWED);
 	if(_LocExist && is_cgi())
 	{
+
 		std::string filePath = get_root() + _request.get_url();
+
+    		std::cout << filePath.c_str() << std::endl;
 		if (access(filePath.c_str(), F_OK) == 0)
 		{
 			if (access(filePath.c_str(), R_OK) == 0 && access(filePath.c_str(), W_OK) == 0)
 			{
-				_body = LaunchCGI(_location,filePath);
+				_body = LaunchCGI(_location, filePath, _request);
 				parse_cgi_header(_body);
 			}
 			else
