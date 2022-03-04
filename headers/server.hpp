@@ -89,9 +89,11 @@ namespace SERVER
 		dataserver _data_server;
 		Request _requset;
 
+		std::vector<dataserver> data_servers;
 	public:
 		void launch(std::vector<dataserver> servers)
 		{
+			data_servers = servers;
 			FD_ZERO(&_masterRFDs);
 			FD_ZERO(&_masterWFDS);
 			FD_ZERO(&_readFDs);

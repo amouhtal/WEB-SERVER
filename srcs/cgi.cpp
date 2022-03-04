@@ -4,7 +4,11 @@
 // #define stdout 1
 // using namespace std;
 
+<<<<<<< HEAD
 std::string LaunchCGI(location _location, std::string FilePath)
+=======
+std::string LaunchCGI(location _location, std::string FilePath, Request _req)
+>>>>>>> server
 {
     pid_t pid;
     int Ifd[2];
@@ -36,9 +40,12 @@ std::string LaunchCGI(location _location, std::string FilePath)
     // {
     //     perror("[CGI ERROR] PIPE");
     // }
-    char *cgi_path = strcpy(cgi_path, _location.getL_Fastcgi_Pass().c_str());
+    char *cgi_path = strdup(_location.getL_Fastcgi_Pass().c_str());
+    std::cout << cgi_path << std::endl;
     char *argv[] = {cgi_path , NULL};
     setenv("SCRIPT_FILENAME", FilePath.c_str(), 1);
+    // setenv("SCRIPT_FILENAME"," _req.get_method().c_str()", 1);
+
     // setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);
     // setenv("SERVER_PROTOCOL", "HTTP/1.1", 1);
 
