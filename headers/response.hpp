@@ -7,7 +7,7 @@
 #include "location.hpp"
 #include <fstream>
 #include <sstream>
-
+#include <sys/stat.h>
 #include <dirent.h>
 #define CONTINUE 100
 #define SWITCHINGPROTOCOL 101
@@ -65,6 +65,7 @@ class Response
 		Request &_request;
 		dataserver &data_server;
 		location _location;
+		location _cgi_location;
 		std::string _headers;
 		std::string _body;
 		std::string _index_path;
@@ -81,6 +82,7 @@ class Response
 		std::string	fast_cgi;
 
     	bool        _LocExist;
+		int serverIndex;
 
 	public:
 	Response(dataserver &server,Request &request,int port);
@@ -120,5 +122,7 @@ class Response
 	bool	is_cgi();
 	std::string get_upload_path();
 	void parse_cgi_header(std::string &cgiResp);
+	void	FindServer();
+	void	handle_cgi();
 };
 #endif

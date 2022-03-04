@@ -44,7 +44,7 @@ Request::Request(const std::string buffer, int maxbody_size)
 	body_on = 0;
 	status_code = 200;
 	request_error = 0;
-	req_header.insert(std::make_pair<std::string,std::string>("Connection:","close"));
+	// req_header.insert(std::make_pair<std::string,std::string>("Connection:","close"));
 
 }
 
@@ -71,6 +71,7 @@ Request &Request::operator=(const Request &rhs)
 		this->maxbody_size = rhs.maxbody_size;
 		this->request_error = rhs.request_error;
 		this->body_list = rhs.body_list;
+		this->cookies = rhs.cookies;
 	}
 	return *this;
 }
@@ -132,17 +133,17 @@ std::string Request::set_top_header(std::string &request)
 }
 void	Request::check_header_values(std::string str)
 {
-	if(str.find("Transfer-Encoding") != npos || str.find("Content-Length") != npos)
+	if(str.find("Transfer-Encoding") != npos || str.find("Content-Length") != npos ||  str.find("Cookie") != npos)
 	{
-	if (str.find(":") == npos || std::count(str.begin(), str.end(), ':') > 1 || str.find(": ") == npos)
-	{
-		throw std::runtime_error("Exception: Syntax error a: " + str);
-	}
-	if (str.find("Connection") != npos)
-	{
-		if (str.find("Connection: ") == npos)
-			throw std::runtime_error("Exception: Syntax error : " + str);
-	}
+		if (str.find(":") == npos || std::count(str.begin(), str.end(), ':') > 1 || str.find(": ") == npos)
+		{
+			throw std::runtime_error("Exception: Syntax error a: " + str);
+		}
+		if (str.find("Connection") != npos)
+		{
+			if (str.find("Connection: ") == npos)
+				throw std::runtime_error("Exception: Syntax error : " + str);
+		}
 	}
 	if (str.find("Host") != npos && str.find("Host: ") == npos)
 		throw std::runtime_error("Exception: Syntax error : "+ str);
@@ -179,7 +180,7 @@ void    Request::parseRequest()
 			pair.first = key;
 			pair.second = value;
 			req_header.insert(pair);
-			if(req_header.count("Transfer-Encoding") > 1 || req_header.count("Content-Length") > 1 || req_header.count("Host") > 1 )
+			if(req_header.count("Transfer-Encoding:") > 1 || req_header.count("Content-Length:") > 1 || req_header.count("Host:") > 1 || req_header.count("Cookie:") > 1 )
 				throw std::runtime_error("Execption: Duplicated Header ");
 			buffer = buffer.substr(leng+2,buffer.length());
 		}
@@ -206,8 +207,19 @@ void    Request::parseRequest()
 				std::cerr << e.what() << '\n';
 			}
 		}
-		if((it = req_header.find("Connection:") ) == req_header.end())
-			req_header.insert(std::make_pair<std::string,std::string>("Connection:","close"));
+		// if((it = req_header.find("Connection:") ) == req_header.end())
+		// 	req_header.insert(std::make_pair<std::string,std::string>("Connection:","close"));
+		if((it = req_header.find("Cookie:") ) != req_header.end())
+		{
+			std::string str = it->second;
+			while (str.find('&') == npos)
+			{
+				cookies.push_back(str.substr(0,str.find('&')));
+				str = str.substr(str.find('&') + 1);
+			}
+			if(str.empty() == false)
+				cookies.push_back(str);
+		}
 		parseBody(buffer);
 	}
 	catch (const std::exception &e)
@@ -215,14 +227,14 @@ void    Request::parseRequest()
 		std::cerr << e.what() << '\n';
 	}
 	check_req_errors();
-	// std::cout << "=================Request================" << std::endl;
-	// std::cout << "method : " << method << std::endl;
-	// std::cout << "URL : " << url << std::endl;
-	// std::cout << "protocol : " << protocol_version << std::endl;  
-	// for (std::multimap<std::string,std::string>::iterator i = req_header.begin(); i != req_header.end(); i++)
-	// 	std::cout << i->first << " " << i->second << std::endl;
-	// std::cout << body << std::endl;
-	// std::cout << "=======================================" << std::endl;
+	std::cout << "=================Request================" << std::endl;
+	std::cout << "method : " << method << std::endl;
+	std::cout << "URL : " << url << std::endl;
+	std::cout << "protocol : " << protocol_version << std::endl;  
+	for (std::multimap<std::string,std::string>::iterator i = req_header.begin(); i != req_header.end(); i++)
+		std::cout << i->first << " " << i->second << std::endl;
+	std::cout << body << std::endl;
+	std::cout << "=======================================" << std::endl;
 }
 
 int Request::check_req_errors()
@@ -276,9 +288,7 @@ Body Request::get_bodys(std::string body)
 	std::string str;
 	int leng;
 	Body tmp_body;
-	
-	// while ((leng = body.find("\n")) == 0)
-	// std::cout << body<< "|" <<std::endl;
+
 	while (body.length() != 0)
 	{
 		leng = body.find('\n');
@@ -294,14 +304,7 @@ Body Request::get_bodys(std::string body)
 		}
 		body = body.substr(leng+1, body.length());
 	}
-	// std::cout << tmp_body.content << std::endl;
-	// std::cout << tmp_body.Content_Disposition << std::endl;
-	// std::cout << tmp_body.Content_Type << std::endl;
-
-	// std::cout << "||" << tmp_body.content.find("\r\n") << std::endl;
 	tmp_body.content = tmp_body.content.substr(2);
-
-
 	tmp_body.content.pop_back();
 	tmp_body.content.pop_back();
 	return(tmp_body);
@@ -429,3 +432,24 @@ Request::~Request()
 {
 
 }
+// void	request::findServer()
+// {
+// 	size_t i = this->_data.size();
+// 	for(size_t j = 0; j < i; j++)
+// 	{
+// 		if (std::find(_data[j].getNames().begin(), _data[j].getNames().end(), _header.find("Host")->second) != _data[j].getNames().end() && std::to_string(_data[j].getPort()) == _port)
+// 		{
+// 			_nbServer = j;
+// 			return ;
+// 		}
+// 	}
+// 	for(size_t j = 0; j < i; j++)
+// 	{
+// 		if (std::to_string(_data[j].getPort()) == _port)
+// 		{
+// 			_nbServer = j;
+// 			return ;
+// 		}
+// 	}
+// 	_nbServer = 0;
+// }
