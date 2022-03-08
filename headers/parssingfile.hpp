@@ -5,12 +5,10 @@
 #include "DataServer.hpp"
 #include "location.hpp"
 
-
 #define CONFIG_FILE_PATH "config/"
 #define LOCATION_MAX_ELEMENT 8
 #define SERVER_MAX_ELEMENT 6
 #define FILE_EXTENTION "conf"
-// #define SERVER "server"
 #define OPEN_BRACKET "["
 #define CLOSE_BRACKET "]"
 #define OPEN_BRACE "{"
@@ -26,7 +24,6 @@
 #define INDEX "index"
 #define ALLOW_METHODS "allow_methods"
 #define FASTCGI_PASS "fastcgi_pass"
-
 #define UPLOAD_ENABLE "upload_enable"
 #define UPLOAD_STORE "upload_store"
 #define RETURN "return"
@@ -41,7 +38,6 @@ class location;
 
 class ParssFile
 {
-
     private:
         std::string extention;
         std::string file_name;
@@ -57,6 +53,7 @@ class ParssFile
         std::vector<dataserver> getServer();
         std::vector<dataserver>    SplitServers();
         std::string getFileName();
+        std::vector<std::string> ft_split(std::string const &str, char c);
 
         /////////////////
         location    getlocationInfo(int &, int &);
@@ -78,7 +75,6 @@ class ParssFile
         void    init_pointer(bool location);
         void    ft_strtrim(std::string &str);
         void    add_server(dataserver &var);
-        std::vector<int>    _getAllPorts();
         /**********************************************/
         std::string    getTypeExtention(std::string );
         void    take_L_autoindex(std::string &, location &);
@@ -91,11 +87,10 @@ class ParssFile
         void    take_L_Root(std::string &, location&);
 };
 
-
 template <typename T>
-void    _print(T &var, std::string type)
+void _print(T &var, std::string type)
 {
-    if(type == "vector")
+    if (type == "vector")
     {
         for (size_t i = 0; i < var.size(); i++)
             std::cout << var[i] << std::endl;
