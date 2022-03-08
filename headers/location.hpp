@@ -1,12 +1,11 @@
 #ifndef LOCATION_HPP
 #define LOCATION_HPP
 #include "library.hpp"
-#include "DataServer.hpp"
 
-class dataserver;
+// class dataserver;
 class location
 {
-    friend class dataserver;
+    // friend class dataserver;
     private:
         int autoindex;
         int upload_enable;
@@ -32,7 +31,7 @@ class location
         void 		setL_Fastcgi_Pass(std::string);
         void        setL_Root(std::string);
         void        setL_Return(int, std::string);
-        void        setL_Allowed_Methods(std::map<std::string, int> &);
+        void        setL_Allowed_Methods(std::map<std::string, int>);
         void        set_L_type(std::string);
         void        set_L_upload_enb(int);
         void        set_L_upload_store(std::string);
