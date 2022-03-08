@@ -76,48 +76,61 @@ void Response::parse_cgi_header(std::string &cgiResp)
 	this->_headers.append("\r\n");
 	this->_headers.append("Connection: " + _request.get_header_value("Connection:"));
 	this->_headers.append("\r\n");
-			while (std::getline(s, buffer))
+	if(_cgi_location.getLocationExtention() == "php")
+	{
+		while (std::getline(s, buffer))
+		{
+			if (buffer.find("X-Powered-By:") != npos)
 			{
-				if (buffer.find("X-Powered-By:") != npos)
-				{
-					this->_headers.append("X-Powered-By: " + buffer.substr(buffer.find(": ") + 2));
-					this->_headers.pop_back();
-				}
-				else if (buffer.find("Set-Cookie:") != npos)
-				{
-					this->_headers.append("Set-Cookie: " + buffer.substr(buffer.find(": ") + 2));
-					this->_headers.pop_back();
-				}
-				else if (buffer.find("Expires:") != npos)
-				{
-					this->_headers.append("Expires: " + buffer.substr(buffer.find(": ") + 2));
-					this->_headers.pop_back();
-				}
-				else if (buffer.find("Cache-Control:") != npos)
-				{
-					this->_headers.append("Cache-Control: " + buffer.substr(buffer.find(": ") + 2));
-					this->_headers.pop_back();
-				}
-				else if (buffer.find("Pragma:") != npos)
-				{
-					this->_headers.append("Pragma: " + buffer.substr(buffer.find(": ") + 2));
-					this->_headers.pop_back();
-				}
-				else if (buffer.find("Content-type:") != npos)
-				{
-					this->_headers.append("Content-type: " + buffer.substr(buffer.find(": ") + 2));
-					this->_headers.pop_back();
-				}
-				else if (buffer.compare("\r\n\r\n") == 0)
-					break;
-				
+				this->_headers.append("X-Powered-By: " + buffer.substr(buffer.find(": ") + 2));
+				this->_headers.pop_back();
 			}
-	std::cout << "* " << _headers << " *" << std::endl;
-			this->_body = cgiResp.substr(cgiResp.find("\r\n\r\n") + 4);
-		this->_headers.append("\r\n");
-		this->_headers.append("Content-Length: " + std::to_string(_body.size()));
-		this->_headers.append("\r\n\r\n");
-		this->_headers.append(_body);
+			else if (buffer.find("Set-Cookie:") != npos)
+			{
+				this->_headers.append("Set-Cookie: " + buffer.substr(buffer.find(": ") + 2));
+				this->_headers.pop_back();
+			}
+			else if (buffer.find("Expires:") != npos)
+			{
+				this->_headers.append("Expires: " + buffer.substr(buffer.find(": ") + 2));
+				this->_headers.pop_back();
+			}
+			else if (buffer.find("Cache-Control:") != npos)
+			{
+				this->_headers.append("Cache-Control: " + buffer.substr(buffer.find(": ") + 2));
+				this->_headers.pop_back();
+			}
+			else if (buffer.find("Pragma:") != npos)
+			{
+				this->_headers.append("Pragma: " + buffer.substr(buffer.find(": ") + 2));
+				this->_headers.pop_back();
+			}
+			else if (buffer.find("Content-type:") != npos)
+			{
+				this->_headers.append("Content-type: " + buffer.substr(buffer.find(": ") + 2));
+				this->_headers.pop_back();
+			}
+			else if (buffer.compare("\r\n\r\n") == 0)
+				break;
+		}
+	}
+	else if (_cgi_location.getLocationExtention() == "py")
+	{
+		while (std::getline(s, buffer))
+		{
+			if (buffer.find("Content-type:") != npos)
+			{
+				this->_headers.pop_back();
+				this->_headers.append("Content-type: " + buffer.substr(buffer.find(": ") + 2));
+			}
+		}
+		this->_body = cgiResp.substr(cgiResp.find("\n\n") + 2);
+	}
+	this->_body = cgiResp.substr(cgiResp.find("\r\n\r\n") + 4);
+	this->_headers.append("\r\n");
+	this->_headers.append("Content-Length: " + std::to_string(_body.size()));
+	this->_headers.append("\r\n\r\n");
+	this->_headers.append(_body);
 }
 void	Response::read_error_file(std::string error_path)
 {
@@ -134,15 +147,48 @@ void	Response::read_error_file(std::string error_path)
 
 }
 void	Response::read_default_error_file(int status)
-{se
-	std::ifstream file("/Users/amouhtal/Desktop/yyy/default_error/default_error.html");
-	std::ostringstream ss;
-	ss << file.rdbuf();
-	_body = ss.str();
-	// std::cout << _body << "|" << std::endl;
-	_body.replace(_body.find("$1"), 2, std::to_string(status));
-	_body.replace(_body.find("$2"), 2, _errors[status]);
-	// 	// puts("here");
+{
+	// std::ifstream file("/Users/mel-hamr/Desktop/server/default_error/default_error.html");
+	// std::ostringstream ss;
+	// ss << file.rdbuf();
+	// _body = ss.str();
+	std::string error = "<!DOCTYPE html>\n\
+						 <html>\n\
+						 <head>\n\
+						 <meta charset=\"UTF-8\" />\n\
+						 <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\" />\n\
+						 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n\
+						 <title>Document</title>\n\
+						 <style>\n\
+						 .container {\n\
+							 margin: 10%;\n\
+								 text-align: center;\n\
+								 color: rgb(0, 0, 0);\n\
+						 }\n\
+	h1 {\n\
+		font-size: 3rem;\n\
+			font-family: \"Courier New\", Courier, monospace;\n\
+			font-weight: bold;\n\
+			margin:-5rem 0 0 0;\n\
+	}\n\
+	.parag {\n\
+		margin:0;\n\
+			font-weight: bold;\n\
+			font-size: 2rem;\n\
+			font-family: \"Courier New\", Courier, monospace;\n\
+	}\n\
+	</style>\n\
+		</head>\n\
+		<body>\n\
+		<div class=\"container\">\n\
+		<h1>\"status code : $1\"</h1>\n\
+		<p class=\"parag\">$2</p>\n\
+		</div>\n\
+		</body>\n\
+		</html>";
+	error.replace(error.find("$1"), 2, std::to_string(status));
+	error.replace(error.find("$2"), 2, _errors[status]);
+	_body = error;
 }
 void	Response::set_error_page(int code)
 {
@@ -499,7 +545,7 @@ void	Response::delete_method()
 void	Response::handle_cgi()
 {
 	struct stat st;
-    std::map<std::string , int> test;
+	std::map<std::string , int> test;
 	std::string filePath = get_root() + _request.get_url();
 	test = _cgi_location.getL_Allowed_Methods();
 
@@ -536,11 +582,12 @@ void	Response::generate_response()
 	}
 	if(_LocExist && is_cgi())
 	{
+		puts("hre");
 		handle_cgi();
 	}
 	else
 	{
-    	std::map<std::string , int> test;
+		std::map<std::string , int> test;
 		test = _location.getL_Allowed_Methods();
 		if(!test[_request.get_method()])
 			set_error_page(METHOD_NOT_ALLOWED);

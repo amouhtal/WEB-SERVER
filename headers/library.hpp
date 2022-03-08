@@ -17,5 +17,6 @@
 #include <sstream>
 #include <stdio.h>
 #include <algorithm>
+#include <dirent.h>
 
 #endif
