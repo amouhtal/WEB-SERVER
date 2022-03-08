@@ -82,6 +82,7 @@ private:
     std::multimap<std::string,std::string> req_body	;
     std::vector<Body> body_list;
     std::vector<std::string> cookies;
+    std::string bounday_body;
     int body_on;
     int status_code;
     int maxbody_size;
@@ -108,6 +109,9 @@ public:
     std::string get_protocol();
 	std::string	get_header_value(std::string to_find);
     std::vector<Body> getBodys();
+    std::string get_bounday_body();
+    std::string get_body();
+    std::string get_queary_string();
     std::multimap<std::string,std::string> get_header();
     void    setUrl(std::string url);
 

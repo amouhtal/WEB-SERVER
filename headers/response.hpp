@@ -63,7 +63,8 @@ class Response
 	private:
 		int _status;
 		Request &_request;
-		dataserver &data_server;
+		std::vector<dataserver> _data_servers;
+		dataserver data_server;
 		location _location;
 		location _cgi_location;
 		std::string _headers;
@@ -85,7 +86,7 @@ class Response
 		int serverIndex;
 
 	public:
-	Response(dataserver &server,Request &request,int port);
+	Response(std::vector<dataserver> server,Request &request,int port);
 	// Response(){}
 	~Response();
 

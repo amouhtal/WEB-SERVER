@@ -1,6 +1,6 @@
 #include "../headers/response.hpp"
 #include "../headers/cgi.hpp"
-Response::Response(dataserver &server,Request &request,int port) : _request(request),data_server(server)
+Response::Response(std::vector<dataserver> server,Request &request,int port) : _request(request),_data_servers(server)
 {
 	_status = _request.get_status();
 	_headers = "HTTP/1.1 ";
@@ -67,8 +67,6 @@ void Response::parse_cgi_header(std::string &cgiResp)
 	time(&rawTime);
 	tm = ctime(&rawTime);
 	tm.pop_back();
-	this->_headers.append("HTTP/1.1");
-	this->_headers.append(" ");
 	this->_headers.append(std::to_string(_status));
 	this->_headers.append(" ");
 	this->_headers.append(this->_errors[_status]);
@@ -78,24 +76,43 @@ void Response::parse_cgi_header(std::string &cgiResp)
 	this->_headers.append("\r\n");
 	this->_headers.append("Connection: " + _request.get_header_value("Connection:"));
 	this->_headers.append("\r\n");
-
 			while (std::getline(s, buffer))
 			{
 				if (buffer.find("X-Powered-By:") != npos)
+				{
 					this->_headers.append("X-Powered-By: " + buffer.substr(buffer.find(": ") + 2));
+					this->_headers.pop_back();
+				}
 				else if (buffer.find("Set-Cookie:") != npos)
+				{
 					this->_headers.append("Set-Cookie: " + buffer.substr(buffer.find(": ") + 2));
+					this->_headers.pop_back();
+				}
 				else if (buffer.find("Expires:") != npos)
+				{
 					this->_headers.append("Expires: " + buffer.substr(buffer.find(": ") + 2));
+					this->_headers.pop_back();
+				}
 				else if (buffer.find("Cache-Control:") != npos)
+				{
 					this->_headers.append("Cache-Control: " + buffer.substr(buffer.find(": ") + 2));
+					this->_headers.pop_back();
+				}
 				else if (buffer.find("Pragma:") != npos)
+				{
 					this->_headers.append("Pragma: " + buffer.substr(buffer.find(": ") + 2));
+					this->_headers.pop_back();
+				}
 				else if (buffer.find("Content-type:") != npos)
+				{
 					this->_headers.append("Content-type: " + buffer.substr(buffer.find(": ") + 2));
+					this->_headers.pop_back();
+				}
 				else if (buffer.compare("\r\n\r\n") == 0)
 					break;
+				
 			}
+	std::cout << "* " << _headers << " *" << std::endl;
 			this->_body = cgiResp.substr(cgiResp.find("\r\n\r\n") + 4);
 		this->_headers.append("\r\n");
 		this->_headers.append("Content-Length: " + std::to_string(_body.size()));
@@ -117,8 +134,8 @@ void	Response::read_error_file(std::string error_path)
 
 }
 void	Response::read_default_error_file(int status)
-{
-	std::ifstream file("/Users/mel-hamr/Desktop/server/default_error/default_error.html");
+{se
+	std::ifstream file("/Users/amouhtal/Desktop/yyy/default_error/default_error.html");
 	std::ostringstream ss;
 	ss << file.rdbuf();
 	_body = ss.str();
@@ -256,7 +273,6 @@ void	Response::build_header()
 		this->_headers.append("Location: " + _location.getL_Return_value());
 		this->_headers.append("\r\n");
 		this->_headers.append("\r\n\r\n");
-		puts("hereereere000");
 	}
 	else
 	{
@@ -264,8 +280,11 @@ void	Response::build_header()
 		this->_headers.append("Date: " + tm.append(" GMT"));
 		this->_headers.append("\r\n");
 		this->_headers.append("Connection: " + _request.get_header_value("Connection:"));
+		if(_location.getL_AutoIndex() == false)
+		{
 		this->_headers.append("\r\n");
 		this->_headers.append("Content-Type: " + getContentType());
+		}
 		if (_request.get_header().count("Transfer-Encoding:"))
 		{
 			// this->_headers.append("\r\n");
@@ -495,7 +514,7 @@ void	Response::handle_cgi()
 				set_error_page(INTERNAL_SERVER_ERROR);
 			else
 			{
-				_body = LaunchCGI(_cgi_location,filePath);
+				_body = LaunchCGI(_cgi_location,filePath,_request);
 				parse_cgi_header(_body);
 			}
 		}
@@ -536,43 +555,49 @@ void	Response::generate_response()
 	}
 }
 
-// void	Response::FindServer()
-// {
-// 	std::string host = _request.get_header_value("Host:");
-// 	std::string server_name = host.substr(0,host.find(':'));
-// 	int	port = std::stoi(host.substr(host.find(':') + 1));
-// 	size_t i = this->_data_servers.size();
-// 	for(size_t j = 0; j < i; j++)
-// 	{
-// 		if (server_name == _data_servers[j])
-// 		{
-// 			for (std::vector<int>::iterator it = _data_servers[j].getListens().begin(); it != _data_servers[j].getListens().begin(); it++)
-// 			{
-// 				if(*it == port)
-// 				{
-// 					serverIndex = j;
-// 					return ;
-// 				}
-// 			}
+void	Response::FindServer()
+{
+	std::string host = _request.get_header_value("Host:");
+	std::string server_name = host.substr(0,host.find(':'));
+	int	port;
+	if(host.find(':') == npos)
+		port = 80;
+	else
+		port = std::stoi(host.substr(host.find(':') + 1));
+
+	size_t i = this->_data_servers.size();
+	for(size_t j = 0; j < i; j++)
+	{
+		if (server_name == _data_servers[j].getServer_name())
+		{
+			for (std::vector<int>::iterator it = _data_servers[j].getListens().begin(); it != _data_servers[j].getListens().begin(); it++)
+			{
+				if(*it == port)
+				{
+					serverIndex = j;
+					return ;
+				}
+			}
 			
-// 		}
-// 	}
-// 	for(size_t j = 0; j < i; j++)
-// 	{
-// 		for (std::vector<int>::iterator it = _data_servers[j].getListens().begin(); it != _data_servers[j].getListens().begin(); it++)
-// 		{
-// 			if(*it == port)
-// 			{
-// 				serverIndex = j;
-// 				return ;
-// 			}
-// 		}
-// 	}
-// 	serverIndex = 0;
-// }
+		}
+	}
+	for(size_t j = 0; j < i; j++)
+	{
+		for (std::vector<int>::iterator it = _data_servers[j].getListens().begin(); it != _data_servers[j].getListens().begin(); it++)
+		{
+			if(*it == port)
+			{
+				serverIndex = j;
+				return ;
+			}
+		}
+	}
+	serverIndex = 0;
+}
 void    Response::init_response()
 {
-	// FindServer();
+	FindServer();
+	data_server = _data_servers[serverIndex];
 	if(_status == OK)
 	{
 		generate_response();

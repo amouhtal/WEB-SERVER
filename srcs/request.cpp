@@ -3,6 +3,7 @@
 Request::Request()
 {
 	request_string = "";
+	url_queary = "";
 	body ="";
 	method ="";
 	url= "";
@@ -55,8 +56,6 @@ Request::Request(const Request &src)
 
 Request &Request::operator=(const Request &rhs)
 {
-	if (this != &rhs)
-	{
 		this->request_string = rhs.request_string;
 		this->boundary = rhs.boundary;
 		this->url_queary = rhs.url_queary;
@@ -72,7 +71,7 @@ Request &Request::operator=(const Request &rhs)
 		this->request_error = rhs.request_error;
 		this->body_list = rhs.body_list;
 		this->cookies = rhs.cookies;
-	}
+		this->bounday_body = rhs.bounday_body;
 	return *this;
 }
 std::string Request::set_top_header(std::string &request)
@@ -172,7 +171,7 @@ void    Request::parseRequest()
 			if(str.find("Content-Type")!= npos && str.find("boundary") != npos)
 			{
 				value = str.substr(str.find("=") + 1,str.length());
-				str = str.substr(0,str.find("; "));
+				// str = str.substr(0,str.find("; "));
 				req_header.insert(std::make_pair<std::string,std::string>("boundary",value));
 			}
 			key =str.substr(0,str.find(' '));
@@ -207,8 +206,8 @@ void    Request::parseRequest()
 				std::cerr << e.what() << '\n';
 			}
 		}
-		// if((it = req_header.find("Connection:") ) == req_header.end())
-		// 	req_header.insert(std::make_pair<std::string,std::string>("Connection:","close"));
+		if((it = req_header.find("Connection:") ) == req_header.end())
+			req_header.insert(std::make_pair<std::string,std::string>("Connection:","close"));
 		if((it = req_header.find("Cookie:") ) != req_header.end())
 		{
 			std::string str = it->second;
@@ -276,7 +275,7 @@ int Request::check_req_errors()
 		}
 		if (this->status_code == 400)
 		{
-			req_header.insert(std::make_pair<std::string,std::string>("Connection","close"));
+			req_header.insert(std::make_pair<std::string,std::string>("Connection:","close"));
 		}
 	}
 	return this->status_code;
@@ -346,7 +345,8 @@ void	Request::parseBody(std::string buffer)
 	size_t start;
 	size_t end;
 
-	body_tmp =buffer;
+	body_tmp = buffer;
+	bounday_body = body_tmp;
 	if(req_header.count("boundary") > 0)
 	{
 		boundary = "--" + req_header.find("boundary")->second;
@@ -427,7 +427,19 @@ std::multimap<std::string,std::string> Request::get_header()
 {
 	return this->req_header;
 }
+std::string	Request::get_body()
+{
+	return this->body;
+}
 
+std::string	Request::get_bounday_body()
+{
+	return this->bounday_body;
+}
+std::string	Request::get_queary_string()
+{
+	return this->url_queary;
+}
 Request::~Request()
 {
 

@@ -1,12 +1,45 @@
 #include "../headers/server.hpp"
-// #include "socket.hpp"
-
-// #include <winsock2.h>
-// #include <Ws2tcpip.h>
 #include <stdio.h>
 
 namespace SERVER
 {
+	void ASERVER::launch(std::vector<dataserver> servers)
+	{
+		data_servers = servers;
+		FD_ZERO(&_masterRFDs);
+		FD_ZERO(&_masterWFDS);
+		FD_ZERO(&_readFDs);
+		bool alreadyInUse = false;
+		std::vector<dataserver>::iterator itt;
+		std::cout << "Begin setup ...  " << std::endl;
+		for (std::vector<dataserver>::iterator it = servers.begin(); it != servers.end(); it++)
+		{
+				for (itt = servers.begin(); itt != it; itt++)
+				{
+					if (it->getListen() == itt->getListen())
+					{
+						alreadyInUse = true;
+						break;
+					}
+				}
+	
+				if (alreadyInUse == false)
+				{
+					_socket.SetupSocket(it->getListen());
+					this->_data_server = *it;
+					this->_masterRFDs = _socket._masterRFDs;
+					this->_masterWFDS = _socket._masterWFDS;
+					this->_maxSockFD = _socket._maxSockFD;
+					this->_masterSockFDs = _socket._masterSockFDs;
+					this->_ports = _socket._ports;
+					this->_port = _socket._port;
+					this->_Adrress = _socket._Adrress;
+					this->_addrLen = _socket._addrLen;
+				}
+			}
+			std::cout << "End setup " << std::endl;
+			waitClients();
+	}
 
 	size_t getContentLen(std::string request)
 	{
@@ -205,7 +238,6 @@ namespace SERVER
 							if (sockFD == _maxSockFD)
 								while (FD_ISSET(_maxSockFD, &_socket._readFDs) == false)
 									_maxSockFD--;
-							// _clientList.erase(sockFD);
 							_clients.erase(_clients.begin() + CurrentCli);
 							CurrentCli--;
 							if (CurrentCli < 0)
@@ -216,72 +248,20 @@ namespace SERVER
 						}
 						else if (valRead > 1)
 						{
-
 							client.appendReq(_buffRes, valRead);
-							// std::cout << std::endl
-							// 		  << "request string : " << client.getRequest() << std::endl;
 							client.setReceived(checkReq(client));
 							if (client.getReceived())
 							{
-								// std::cout << "|" << client.getRequest() << "|" << std::endl;
-								// puts("Im here");
-								// exit(1);
-
 								Request r(client.getRequest(), 30000000);
 								r.parseRequest();
 								_requset = r;
 
-								Response resp(_data_server, _requset, 80);
+								Response resp(data_servers, _requset, 80);
 								resp.init_response();
-
-								// std::string respStr = client.getRequest();
 								client.setRequest(resp.getHeader());
 
 							}
-							// std::cout << "valread :" << valRead << std::endl;
 						}
-
-
-						// if (client.getEndofReq() == false)
-						// {
-						// 	std::string statusLine;
-						// 	std::string bodyMessage;
-						// 	std::map<std::string, std::string> _responseHeaders;
-						// 	std::string respStr;
-
-						// 	statusLine = "HTTP/1.1 200 OK";
-						// 	std::ifstream file;
-						// 	std::ostringstream streambuff;
-						// 	file.open("/goinfre/amouhtal/tom.mp4", std::ios::binary);
-						// 	if (file.is_open())
-						// 	{
-						// 		streambuff << file.rdbuf();
-						// 		bodyMessage = streambuff.str();
-						// 		file.close();
-						// 	}
-						// 	_responseHeaders["Content-Length"] = std::to_string(bodyMessage.length());
-						// 	// Content-Type: image
-						// 	_responseHeaders["Content-Type"] = "video/mp4";
-						// 	respStr += statusLine;
-						// 	respStr += "\r\n";
-						// 	std::map<std::string, std::string>::iterator it = _responseHeaders.begin();
-						// 	while (it != _responseHeaders.end())
-						// 	{
-						// 		respStr += it->first;
-						// 		respStr += ": ";
-						// 		respStr += it->second;
-						// 		respStr += "\n";
-						// 		it++;
-						// 	}
-						// 	respStr += "\r\n";
-						// 	respStr += bodyMessage;
-						// 	respStr += "\r\n\r\n";
-						// 	client.setReceived(checkReq(client));
-						// 	// std::cout << respStr << std::endl;
-						// 	client.setRequest(respStr);
-						// 	client.setLenReq(respStr.length());
-						// 	client.setgetEndofReq(true);
-						// }
 					}
 
 					if (FD_ISSET(sockFD, &_socket._writeFDs) && client.getReceived())
@@ -360,11 +340,6 @@ namespace SERVER
 								CurrentCli = 0;
 								break;
 							}
-							/*client.getRequest().clear();
-							bool_treat = true;
-							client.setLenReq(0);
-							client.SendRetSnd(0);
-							client.setgetEndofReq(false);*/
 						}
 						// std::cout << "req = " << client.getRequest() << std::endl;
 						// std::cout << "req2 = " << client.getRequest() << std::endl;

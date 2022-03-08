@@ -89,10 +89,10 @@ namespace SERVER
 	{
 		int accptSockFD = accept(sockFD, (struct sockaddr *)&_Adrress, &_addrLen);
 		if (accptSockFD == -1)
-			perror("[ERROR] Socket");
+			std::cerr << "[ERROR] Socket" << std::endl;
 		std::cout << "New connection: Master socket " << std::to_string(sockFD) << ". Accept socket " + std::to_string(accptSockFD) << ", address " << inet_ntoa(_Adrress.sin_addr) << ":" << std::to_string(ntohs(_Adrress.sin_port)) << std::endl;
 		if (fcntl(accptSockFD, F_SETFL, O_NONBLOCK) == -1)
-			perror("ERROR] fcntl");
+			std::cerr << "ERROR] fcntl" << std::endl;
 		FD_SET(accptSockFD, &_socket._masterRFDs);
 		FD_SET(accptSockFD, &_socket._masterWFDS);
 		// _socket._masterSockFDs.push_back(accptSockFD);
@@ -252,7 +252,7 @@ namespace SERVER
 							}
 							catch (std::exception &e)
 							{
-								std::cout << e.what() << std::endl;
+								std::cerr << e.what() << std::endl;
 							}
 						}
 						std::cout << "sockFD : " << sockFD << " SendRet : " << SendRet << " send lenght : " << client.GetRetSnd() << "req lenght " << client.getLenReq() << std::endl;

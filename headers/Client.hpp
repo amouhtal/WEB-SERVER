@@ -1,3 +1,5 @@
+#ifndef __CLIENT_HPP__
+#define __CLIENT_HPP__
 #include "server.hpp"
 
 namespace SERVER
@@ -13,134 +15,28 @@ namespace SERVER
 		size_t _lenReq;
 		int _SendRetSnd;
 		int _RecRetSnd;
-
 	public:
-		Client(int sockFd, std::string request, std::string ip)
-		{
-			_sockFd = sockFd;
-			_request = request;
-			_ip = ip;
-			_endOfReq = false;
-			_lenReq = 0;
-			_SendRetSnd = 0;
-			_RecRetSnd = 0;
-			_received = false;
-
-
-		}
-
-		void setRecRetSnd(size_t SendRetSnd)
-		{
-			_RecRetSnd = SendRetSnd;
-		}
-
-		int GetRecRetSnd()
-		{
-			return (_RecRetSnd);
-		}
-
-		void SendRetSnd(size_t SendRetSnd)
-		{
-			_SendRetSnd = SendRetSnd;
-		}
-
-		int GetRetSnd()
-		{
-			return (_SendRetSnd);
-		}
-
-		void setLenReq(size_t lenReq)
-		{
-			_lenReq = lenReq;
-		}
-
-		size_t getLenReq()
-		{
-			return (_lenReq);
-		}
-
-		bool getEndofReq()
-		{
-			return _endOfReq;
-		}
-
-		void setgetEndofReq(bool getEndofReq)
-		{
-			_endOfReq = getEndofReq;
-		}
-		void appendReq(char *request, int lenght)
-		{
-	
-			try
-			{
-				/* code */
-			_request.append(request, lenght);
-			}
-			catch(const std::exception& e)
-			{
-				std::cerr << e.what() << '\n';
-			}
-			
-		}
-
-		std::string &getRequest()
-		{
-			return (_request);
-		}
-
-		void setRequest(std::string request)
-		{
-			_request = request;
-		}
-
-		Client &operator=(Client &rhs)
-		{
-			this->_sockFd = rhs._sockFd;
-			this->_ip = rhs._ip;
-			this->_request = rhs._request;
-			this->_endOfReq = rhs._endOfReq;
-			this->_received = rhs._received;
-			return *this;
-		}
-
-		int getSockFd()
-		{
-			return (_sockFd);
-		}
-
-		void setReceived(bool received)
-		{
-			_received = received;
-		}
-
-		bool getReceived()
-		{
-			return (_received);
-		}
-
-		bool operator!=(Client &rhs)
-		{
-			return (this->_sockFd != rhs._sockFd);
-		}
-		
-		bool operator==(Client const &rhs)
-		{
-			return (*this == rhs);
-		}
-
-		Client()
-		{
-			this->_sockFd = -1;
-			this->_ip = "";
-			this->_request = "";
-			this->_endOfReq = 0;
-			this->_received = false;
-		}
-
-		~Client()
-		{
-			// puts("---->here des");
-			// delete this;
-		}
+		Client(int sockFd, std::string request, std::string ip);
+		void		setRecRetSnd(size_t SendRetSnd);
+		int			GetRecRetSnd();
+		void		SendRetSnd(size_t SendRetSnd);
+		int			GetRetSnd();
+		void		setLenReq(size_t lenReq);
+		size_t		getLenReq();
+		bool		getEndofReq();
+		void		setgetEndofReq(bool getEndofReq);
+		void		appendReq(char *request, int lenght);
+		std::string &getRequest();
+		void 		setRequest(std::string request);
+		Client		&operator=(Client &rhs);
+		int			getSockFd();
+		void		setReceived(bool received);
+		bool		getReceived();
+		bool		operator!=(Client &rhs);
+		bool		operator==(Client const &rhs);
+		Client();
+		~Client();
 	};
 }
+
+#endif
